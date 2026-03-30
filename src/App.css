@@ -1,13 +1,220 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-  background: #000;
-  color: #fff;
-  font-family: Arial;
+  background: #0d0d0d;
+  color: #e0e0e0;
+  font-family: 'Courier New', monospace;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .debug-screen {
-  padding: 20px;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
 }
 
+h1 {
+  font-size: 17px;
+  color: #fff;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #2a2a2a;
+  padding-bottom: 10px;
+}
+
+h2 {
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+/* ─── Blocos ─────────────────────────────────────────────────────────────── */
 .block {
-  margin-bottom: 20px;
+  background: #141414;
+  border: 1px solid #252525;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.block.highlight-blue   { border-color: #2a5aff; background: #080f22; }
+.block.highlight-green  { border-color: #1a8a1a; background: #050f05; }
+.block.highlight-orange { border-color: #cc7700; background: #120900; }
+.block.highlight-purple { border-color: #7744cc; background: #0d0820; }
+.block.highlight-gray   { border-color: #333;    background: #111;    }
+
+/* ─── Linhas de dado ─────────────────────────────────────────────────────── */
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 7px 0;
+  border-bottom: 1px solid #1c1c1c;
+  gap: 12px;
+}
+
+.row:last-child { border-bottom: none; }
+
+.label { color: #777; font-size: 12px; flex-shrink: 0; }
+
+.value {
+  color: #fff;
+  font-weight: bold;
+  font-size: 14px;
+  text-align: right;
+  word-break: break-all;
+}
+
+.value.big  { font-size: 28px; line-height: 1; }
+.value.mono { font-size: 10px; color: #555; font-weight: normal; }
+
+.highlight-blue   .value.big { color: #5599ff; }
+.highlight-green  .value.big { color: #55cc55; }
+.highlight-purple .value.big { color: #cc88ff; }
+
+/* ─── Erro ───────────────────────────────────────────────────────────────── */
+.error-box {
+  background: #1a0000;
+  border: 1px solid #aa2222;
+  color: #ff8888;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+/* ─── Botões principais ──────────────────────────────────────────────────── */
+.btn-row { display: flex; gap: 10px; margin-top: 4px; }
+
+.btn {
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  border: 1px solid #333;
+  font-family: inherit;
+}
+
+.btn:active { opacity: 0.7; }
+
+.btn-start { flex: 1; background: #071a00; color: #55ee55; border-color: #1a5a1a; }
+.btn-stop  { flex: 1; background: #1a0000; color: #ee5555; border-color: #5a1a1a; }
+.btn-reset { flex: 0 0 auto; padding: 14px 18px; background: #181818; color: #777; }
+
+/* ─── Calibração ─────────────────────────────────────────────────────────── */
+.cal-btn-row { display: flex; gap: 8px; margin-top: 12px; }
+
+.btn-cal-start {
+  flex: 1; background: #120900; color: #ffaa44;
+  border-color: #885500; border-radius: 8px; padding: 12px;
+  font-size: 13px; cursor: pointer; font-family: inherit;
+  border-width: 1px; border-style: solid;
+}
+
+.btn-cal-finish {
+  flex: 1; background: #001a00; color: #44ff88;
+  border-color: #006600; border-radius: 8px; padding: 12px;
+  font-size: 13px; cursor: pointer; font-family: inherit;
+  border-width: 1px; border-style: solid;
+}
+
+.btn-cal-start:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.cal-hint {
+  margin-top: 10px;
+  font-size: 11px;
+  color: #cc8833;
+  line-height: 1.5;
+}
+
+/* ─── Música ─────────────────────────────────────────────────────────────── */
+.file-row { margin-bottom: 10px; }
+
+.file-label {
+  display: inline-block;
+  padding: 10px 14px;
+  background: #1a1030;
+  border: 1px dashed #7744cc;
+  border-radius: 6px;
+  color: #cc99ff;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.file-input { display: none; }
+
+.music-controls { display: flex; gap: 8px; margin-top: 12px; }
+
+.btn-play {
+  flex: 1; background: #1a0a2a; color: #cc88ff;
+  border-color: #7744cc; border-radius: 8px; padding: 12px;
+  font-size: 14px; cursor: pointer; font-family: inherit;
+  border-width: 1px; border-style: solid;
+}
+
+.btn-play:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.bpm-manual {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.bpm-chip {
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: #1a1a1a;
+  border: 1px solid #444;
+  color: #aaa;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.bpm-chip.active { background: #2a0a4a; border-color: #9955ee; color: #cc88ff; }
+
+.mode-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 8px;
+  flex-wrap: wrap;
+}
+
+.mode-chip {
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: #1a1a2a;
+  border: 1px solid #444;
+  color: #aaa;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.mode-chip.active { background: #2a0a4a; border-color: #9955ee; color: #cc88ff; }
+
+.pace-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+}
+
+.pace-input {
+  width: 80px;
+  padding: 6px 8px;
+  background: #0d0d1a;
+  border: 1px solid #7744cc;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+  font-family: inherit;
+  text-align: right;
 }
