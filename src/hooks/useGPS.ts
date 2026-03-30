@@ -1,12 +1,10 @@
 import { useState, useRef, useCallback } from 'react';
 import { Geolocation } from '@capacitor/geolocation';
 
-type Point = { lat: number; lon: number };
+type Point = { lat: number; lon: number; t: number };
 
-// BUG ORIGINAL: não existia filtro de accuracy nem de velocidade absurda.
-// Qualquer ponto GPS era aceito, acumulando ruído como distância real.
-const MAX_ACCURACY_M = 25;   // descarta ponto com precisão ruim
-const MAX_SPEED_MS = 12;     // descarta saltos impossíveis (> 43 km/h)
+const MAX_ACCURACY_M = 25;
+const MAX_SPEED_MS   = 12;  // > 43 km/h = salto absurdo
 
 function haversine(a: Point, b: Point): number {
   const R = 6_371_000;
@@ -21,7 +19,7 @@ function haversine(a: Point, b: Point): number {
 }
 
 export function formatPace(p: number): string {
-  if (!p || !Number.isFinite(p) || p > 30) return '--:--';
+  if (!p || !Number.isFinite(p) || p <= 0 || p > 30) return '--:--';
   let m = Math.floor(p);
   let s = Math.round((p - m) * 60);
   if (s === 60) { m += 1; s = 0; }
@@ -38,10 +36,12 @@ export function useGPS() {
     error: null as string | null,
   });
 
-  const lastRef = useRef<Point | null>(null);
-  const firstTimeRef = useRef<number | null>(null); // para pace médio correto
-  const distRef = useRef(0);
-  const watchIdRef = useRef<string | null>(null);
+  // BUG CORRIGIDO: o ponto anterior agora guarda também o timestamp (campo .t)
+  // para que dtSec seja calculado como (t_atual - t_anterior), não (t - t).
+  const lastRef        = useRef<Point | null>(null);
+  const firstTimeRef   = useRef<number | null>(null);
+  const distRef        = useRef(0);
+  const watchIdRef     = useRef<string | null>(null);
 
   const start = useCallback(async () => {
     try {
@@ -55,12 +55,12 @@ export function useGPS() {
 
       setData((d) => ({ ...d, status: 'starting', error: null }));
 
-      distRef.current = 0;
-      lastRef.current = null;
+      distRef.current      = 0;
+      lastRef.current      = null;
       firstTimeRef.current = null;
 
       const watchId = await Geolocation.watchPosition(
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+        { enableHighAccuracy: true, timeout: 10_000, maximumAge: 0 },
         (pos, err) => {
           if (err) {
             setData((d) => ({ ...d, status: 'idle', error: err.message ?? 'Erro GPS' }));
@@ -69,52 +69,58 @@ export function useGPS() {
           if (!pos?.coords) return;
 
           const acc = pos.coords.accuracy ?? 999;
-
-          // BUG ORIGINAL: ponto era aceito mesmo com accuracy ruim (ex: 80m em prédios).
-          // CORREÇÃO: descartar se accuracy > 25m.
           if (acc > MAX_ACCURACY_M) {
             setData((d) => ({ ...d, accuracy: Math.round(acc) }));
             return;
           }
 
-          const coords: Point = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-          const now = pos.timestamp ?? Date.now();
+          const now: number = pos.timestamp ?? Date.now();
+
+          const current: Point = {
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+            t:   now,
+          };
 
           if (!firstTimeRef.current) firstTimeRef.current = now;
 
           if (lastRef.current) {
-            const dist = haversine(lastRef.current, coords);
-            const dtSec = (now - (pos.timestamp ?? Date.now())) / 1000;
+            const dist = haversine(lastRef.current, current);
 
-            // BUG ORIGINAL: filtro `d < 100` não detectava velocidades absurdas.
-            // CORREÇÃO: calcular velocidade e descartar se > 12 m/s.
-            const speed = dtSec > 0 ? dist / Math.max(dtSec, 1) : 0;
-            if (speed <= MAX_SPEED_MS) {
-              distRef.current += dist;
+            // BUG ORIGINAL: dtSec = (now - (pos.timestamp ?? Date.now())) / 1000
+            // Isso calculava (now - now) = 0 porque 'now' JA era pos.timestamp.
+            // Com dtSec = 0, speed = Infinity e o filtro MAX_SPEED_MS nunca barrava nada.
+            //
+            // CORRECAO: usar lastRef.current.t (timestamp do ponto anterior).
+            const dtSec = (current.t - lastRef.current.t) / 1_000;
+
+            if (dtSec > 0) {
+              const speed = dist / dtSec;
+              if (speed <= MAX_SPEED_MS) {
+                distRef.current += dist;
+              }
             }
           }
 
-          // Pace médio = distância total / tempo total (estável)
-          const totalSec = firstTimeRef.current
-            ? (now - firstTimeRef.current) / 1000
-            : 0;
-          const avgSpeed = totalSec > 0 ? distRef.current / totalSec : 0;
-          const pace = avgSpeed > 0 ? 1000 / (avgSpeed * 60) : 0;
+          const totalSec  = (now - firstTimeRef.current!) / 1_000;
+          const avgSpeed  = totalSec > 0 ? distRef.current / totalSec : 0;
+          const pace      = avgSpeed > 0 ? 1000 / (avgSpeed * 60) : 0;
 
-          const gpsSpeed = pos.coords.speed ?? 0;
-          const effectiveSpeed =
-            gpsSpeed > 0 && gpsSpeed <= MAX_SPEED_MS ? gpsSpeed : avgSpeed;
+          const gpsSpeed     = pos.coords.speed ?? 0;
+          const effectiveSpd = gpsSpeed > 0 && gpsSpeed <= MAX_SPEED_MS
+            ? gpsSpeed
+            : avgSpeed;
 
           setData({
-            status: 'active',
+            status:           'active',
             smoothedDistance: Math.round(distRef.current),
-            averagePace: pace,
-            speedMs: +effectiveSpeed.toFixed(2),
-            accuracy: Math.round(acc),
-            error: null,
+            averagePace:      pace,
+            speedMs:          +effectiveSpd.toFixed(2),
+            accuracy:         Math.round(acc),
+            error:            null,
           });
 
-          lastRef.current = coords;
+          lastRef.current = current;
         }
       );
 
@@ -138,16 +144,16 @@ export function useGPS() {
   }, []);
 
   const resetSession = useCallback(() => {
-    distRef.current = 0;
-    lastRef.current = null;
+    distRef.current      = 0;
+    lastRef.current      = null;
     firstTimeRef.current = null;
     setData((d) => ({
       ...d,
       smoothedDistance: 0,
-      averagePace: 0,
-      speedMs: 0,
-      accuracy: 0,
-      error: null,
+      averagePace:      0,
+      speedMs:          0,
+      accuracy:         0,
+      error:            null,
     }));
   }, []);
 

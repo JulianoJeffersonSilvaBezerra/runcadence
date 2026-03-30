@@ -22,7 +22,7 @@ export function useStepCounter() {
 
   const calcSPM = useCallback((steps: number): number => {
     const now = Date.now();
-    const last = historyRef.current.at(-1);
+    const last = historyRef.current[historyRef.current.length - 1];
 
     // Não adiciona ponto se não houve incremento (evita SPM falso)
     if (last && last.steps === steps) return spmRef.current;
@@ -35,7 +35,7 @@ export function useStepCounter() {
     if (historyRef.current.length < 2) return spmRef.current;
 
     const first = historyRef.current[0];
-    const newest = historyRef.current.at(-1)!;
+    const newest = historyRef.current[historyRef.current.length - 1]!;
     const deltaSteps = newest.steps - first.steps;
     const deltaTime = (newest.t - first.t) / 60_000;
 
