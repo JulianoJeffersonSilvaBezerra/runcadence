@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">RunCadence</string>
-    <string name="title_activity_main">RunCadence</string>
-    <string name="package_name">com.runcadence.app</string>
-    <string name="custom_url_scheme">com.runcadence.app</string>
+    <string name="app_name">PaceUp</string>
+    <string name="title_activity_main">PaceUp</string>
+    <string name="package_name">com.paceup.app</string>
+    <string name="custom_url_scheme">com.paceup.app</string>
 </resources>

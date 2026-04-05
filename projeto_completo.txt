@@ -1,14 +1,4 @@
-﻿===== capacitor.config.ts =====
-import type { CapacitorConfig } from '@capacitor/cli';
-
-const config: CapacitorConfig = {
-  appId: 'com.runcadence.app',
-  appName: 'RunCadence',
-  webDir: 'dist',
-};
-
-export default config;
-===== package.json =====
+﻿===== package.json =====
 {
   "name": "runcadence",
   "private": true,
@@ -20,14 +10,10 @@ export default config;
     "preview": "vite preview"
   },
   "dependencies": {
-    "@capacitor/android": "^7.0.0",
-    "@capacitor/core": "^7.0.0",
-    "@capacitor/geolocation": "^7.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@capacitor/cli": "^7.0.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
@@ -49,13 +35,14 @@ export default defineConfig({
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RunCadence</title>
+    <title>PaceUp</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+
 ===== C:\runcadence\src\App.css =====
 :root {
   --bg: #08090f;
@@ -1079,1133 +1066,39 @@ input {
     text-align: left;
   }
 }
-===== C:\runcadence\src\App.tsx =====
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useGPS, formatPace } from './hooks/useGPS';
-import { useCalibration } from './hooks/useCalibration';
-import { useMusicEngine } from './hooks/useMusicEngine';
-import { useCadence } from './hooks/useCadence';
-import type { MusicMode } from './hooks/useMusicEngine';
-import './App.css';
+/* â†‘ FECHA o @media (max-width: 380px) aqui â€” NÃƒO depois */
 
-export default function App() {
-  const gps = useGPS();
-  const cal = useCalibration();
-  const music = useMusicEngine();
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   NOVO CSS â€” Mapa e BPM Editor (fora de qualquer media query)
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-  const rawStride = cal.data.strideM * (1 + (gps.data.speedMs - 3) * 0.05);
-  const dynamicStride = Math.min(
-    cal.data.strideM * 1.12,
-    Math.max(cal.data.strideM * 0.88, rawStride)
-  );
-
-  const cadence = useCadence(
-    gps.data.speedMs,
-    gps.data.smoothedDistance,
-    dynamicStride
-  );
-
-  const [targetPaceInput, setTargetPaceInput] = useState('5.30');
-
-  const tickRef = useRef(music.tick);
-  const spmRef = useRef(cadence.data.stepsPerMinute);
-  const strideRef = useRef(dynamicStride);
-  const modeRef = useRef(music.data.mode);
-  const tpInputRef = useRef(targetPaceInput);
-
-  useEffect(() => {
-    tickRef.current = music.tick;
-  }, [music.tick]);
-
-  useEffect(() => {
-    spmRef.current = cadence.data.stepsPerMinute;
-  }, [cadence.data.stepsPerMinute]);
-
-  useEffect(() => {
-    strideRef.current = dynamicStride;
-  }, [dynamicStride]);
-
-  useEffect(() => {
-    modeRef.current = music.data.mode;
-  }, [music.data.mode]);
-
-  useEffect(() => {
-    tpInputRef.current = targetPaceInput;
-  }, [targetPaceInput]);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      const tp =
-        modeRef.current === 'target_pace'
-          ? parseFloat(tpInputRef.current) || 0
-          : undefined;
-
-      tickRef.current(spmRef.current, strideRef.current, tp);
-    }, 5000);
-
-    return () => clearInterval(id);
-  }, []);
-
-  const gpsActive = gps.data.status === 'active';
-  const calRunning = cal.data.status === 'running';
-  const musicPlaying = music.data.status === 'playing';
-
-  const paceBySPM =
-    cadence.data.stepsPerMinute > 0
-      ? 1000 / (cadence.data.stepsPerMinute * dynamicStride)
-      : 0;
-
-  const paceError =
-    gps.data.averagePace > 0 && paceBySPM > 0
-      ? Math.abs(gps.data.averagePace - paceBySPM)
-      : 0;
-
-  const paceErrorLabel =
-    paceError === 0
-      ? '--'
-      : paceError < 0.2
-      ? 'Perfeito'
-      : paceError < 0.4
-      ? 'AceitÃ¡vel'
-      : 'Verificar';
-
-  const targetPaceNumber = parseFloat(targetPaceInput) || 0;
-
-  const heroPace = gps.data.averagePace > 0 ? gps.data.averagePace : 0;
-  const heroPaceText = heroPace > 0 ? formatPace(heroPace) : '--:--';
-
-  const paceDiff = useMemo(() => {
-    if (!heroPace || !targetPaceNumber) return null;
-    const diff = heroPace - targetPaceNumber;
-    return diff;
-  }, [heroPace, targetPaceNumber]);
-
-  async function handleStart() {
-    await gps.start();
-  }
-
-  async function handleStop() {
-    await gps.stop();
-    music.stop();
-    cadence.reset();
-  }
-
-  function handleReset() {
-    gps.resetSession();
-    cadence.reset();
-  }
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) {
-      music.loadFile(file);
-    }
-  }
-
-  const error = gps.data.error || cal.data.error || music.data.error;
-
-  const levelProgress = Math.min(
-    100,
-    Math.round((gps.data.smoothedDistance / 5000) * 100)
-  );
-
-  const achievementItems = [
-    {
-      icon: 'ðŸ”¥',
-      label: 'SequÃªncia',
-      active: cadence.data.elapsedSeconds > 0,
-    },
-    {
-      icon: 'âš¡',
-      label: 'Ritmo',
-      active: gps.data.speedMs > 1.8,
-    },
-    {
-      icon: 'ðŸŽµ',
-      label: 'MÃºsica',
-      active: music.data.hasAudioBuffer,
-    },
-    {
-      icon: 'ðŸ“',
-      label: 'GPS',
-      active: gpsActive,
-    },
-  ];
-
-  return (
-    <div className="app-shell">
-      <div className="app-bg-glow app-bg-glow-1" />
-      <div className="app-bg-glow app-bg-glow-2" />
-
-      <main className="app-screen">
-        <header className="topbar">
-          <div className="brand">
-            <div className="brand-icon">ðŸƒ</div>
-            <div>
-              <h1>RunCadence</h1>
-              <p>corrida com mÃºsica no ritmo certo</p>
-            </div>
-          </div>
-
-          <div className={`gps-pill ${gpsActive ? 'gps-on' : 'gps-off'}`}>
-            <span className="gps-dot" />
-            {gpsActive ? 'GPS ativo' : 'GPS pronto'}
-          </div>
-        </header>
-
-        {error && <div className="alert-box">âš ï¸ {error}</div>}
-
-        <section className="hero-card">
-          <div className="hero-top">
-            <div>
-              <span className="eyebrow">Pace atual</span>
-              <div className="hero-pace">{heroPaceText}</div>
-              <div className="hero-unit">min/km</div>
-            </div>
-
-            <div className="hero-target">
-              <div className="target-ring">
-                <div className="target-ring-inner">
-                  <strong>
-                    {music.data.targetPace > 0
-                      ? formatPace(music.data.targetPace)
-                      : formatPace(targetPaceNumber)}
-                  </strong>
-                  <span>alvo</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="hero-diff-row">
-            <div className="hero-diff-badge">
-              {paceDiff === null
-                ? 'Sem comparaÃ§Ã£o'
-                : paceDiff < 0
-                ? `â–² ${Math.abs(paceDiff).toFixed(2)} abaixo do alvo`
-                : `â–¼ ${paceDiff.toFixed(2)} acima do alvo`}
-            </div>
-          </div>
-        </section>
-
-        <section className="metrics-grid">
-          <MetricCard
-            color="green"
-            label="CadÃªncia"
-            value={cadence.data.stepsPerMinute || 0}
-            unit="spm"
-          />
-          <MetricCard
-            color="blue"
-            label="DistÃ¢ncia"
-            value={(gps.data.smoothedDistance / 1000).toFixed(2)}
-            unit="km"
-          />
-          <MetricCard
-            color="orange"
-            label="Tempo"
-            value={formatElapsed(cadence.data.elapsedSeconds)}
-          />
-        </section>
-
-        <section className="pace-bars-card">
-          <div className="section-head">
-            <h2>Pace e comparaÃ§Ã£o</h2>
-            <span className="mini-badge">
-              {gps.data.averagePace > 0 ? 'ao vivo' : 'aguardando movimento'}
-            </span>
-          </div>
-
-          <div className="comparison-grid">
-            <InfoLine
-              label="Pace mÃ©dio GPS"
-              value={formatPace(gps.data.averagePace)}
-            />
-            <InfoLine
-              label="Pace por fÃ³rmula"
-              value={formatPace(paceBySPM)}
-            />
-            <InfoLine
-              label="Pace-alvo"
-              value={
-                music.data.targetPace > 0
-                  ? formatPace(music.data.targetPace)
-                  : formatPace(targetPaceNumber)
-              }
-            />
-            <InfoLine
-              label="Erro GPS Ã— fÃ³rmula"
-              value={paceError > 0 ? `${paceError.toFixed(2)} min/km` : '--'}
-              sub={paceError > 0 ? paceErrorLabel : undefined}
-            />
-          </div>
-        </section>
-
-        <section className="player-card">
-          <div className="section-head">
-            <h2>MÃºsica</h2>
-            <span className="mini-badge">
-              {musicPlaying ? 'tocando' : 'pronta'}
-            </span>
-          </div>
-
-          <div className="player-track">
-            <div className="track-art">ðŸŽµ</div>
-
-            <div className="track-meta">
-              <div className="track-title">
-                {music.data.fileName || 'Nenhuma mÃºsica carregada'}
-              </div>
-              <div className="track-subtitle">
-                {music.data.fileName
-                  ? 'arquivo carregado para o treino'
-                  : 'adicione uma faixa para sincronizar com o pace'}
-              </div>
-
-              <div className="track-tags">
-                <span className="track-tag track-tag-green">
-                  {music.data.bpm || '--'} BPM
-                </span>
-                <span className="track-tag track-tag-blue">
-                  {music.data.playbackRate.toFixed(2)}Ã—
-                </span>
-                <span className="track-tag track-tag-purple">
-                  passada {dynamicStride.toFixed(2)}m
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="waveform">
-            {Array.from({ length: 36 }).map((_, i) => (
-              <span
-                key={i}
-                className={`wave-bar ${
-                  i < 16 ? 'wave-played' : i === 16 ? 'wave-current' : ''
-                }`}
-                style={{ height: `${30 + ((i * 13) % 55)}%` }}
-              />
-            ))}
-          </div>
-
-          <div className="time-row">
-            <span>1:44</span>
-            <span>3:46</span>
-          </div>
-
-          <div className="mode-switch">
-            {(['follow_music', 'target_pace'] as MusicMode[]).map((m) => (
-              <button
-                key={m}
-                className={`mode-btn ${
-                  music.data.mode === m ? 'mode-btn-active' : ''
-                }`}
-                onClick={() => music.setMode(m)}
-              >
-                {m === 'follow_music' ? 'Seguir mÃºsica' : 'Pace-alvo'}
-              </button>
-            ))}
-          </div>
-
-          {music.data.mode === 'target_pace' && (
-            <div className="target-input-card">
-              <label htmlFor="targetPace">Pace-alvo</label>
-              <input
-                id="targetPace"
-                type="number"
-                step="0.05"
-                min="3"
-                max="15"
-                value={targetPaceInput}
-                onChange={(e) => setTargetPaceInput(e.target.value)}
-              />
-            </div>
-          )}
-
-          <div className="upload-row">
-            <label className="upload-btn">
-              Carregar mÃºsica
-              <input type="file" accept="audio/*" onChange={handleFileChange} />
-            </label>
-
-            <div className="player-controls">
-              <button className="icon-btn" onClick={music.stop}>
-                â– 
-              </button>
-              <button
-                className="play-btn"
-                onClick={musicPlaying ? music.pause : music.play}
-                disabled={!music.data.hasAudioBuffer}
-              >
-                {musicPlaying ? 'Pausar' : 'Play'}
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <section className="control-card">
-          <div className="section-head">
-            <h2>Controle de pace</h2>
-            <span className="mini-badge">
-              {music.data.mode === 'target_pace' ? 'auto ativo' : 'manual'}
-            </span>
-          </div>
-
-          <div className="pace-control-box">
-            <button
-              className="step-btn"
-              onClick={() =>
-                setTargetPaceInput((prev) =>
-                  Math.max(3, (parseFloat(prev || '5.30') - 0.05)).toFixed(2)
-                )
-              }
-            >
-              âˆ’
-            </button>
-
-            <div className="pace-display-box">
-              <div className="pace-display-value">
-                {targetPaceNumber.toFixed(2)}
-              </div>
-              <div className="pace-display-unit">min/km</div>
-            </div>
-
-            <button
-              className="step-btn"
-              onClick={() =>
-                setTargetPaceInput((prev) =>
-                  Math.min(15, (parseFloat(prev || '5.30') + 0.05)).toFixed(2)
-                )
-              }
-            >
-              +
-            </button>
-          </div>
-        </section>
-
-        <section className="progress-card">
-          <div className="section-head">
-            <h2>Progresso</h2>
-            <span className="mini-badge">{levelProgress}% da meta de 5 km</span>
-          </div>
-
-          <div className="xp-row">
-            <div>
-              <div className="xp-title">Meta da sessÃ£o</div>
-              <div className="xp-sub">
-                {(gps.data.smoothedDistance / 1000).toFixed(2)} km de 5.00 km
-              </div>
-            </div>
-            <div className="xp-value">
-              {Math.round(gps.data.smoothedDistance)} XP
-            </div>
-          </div>
-
-          <div className="xp-bar">
-            <div
-              className="xp-fill"
-              style={{ width: `${levelProgress}%` }}
-            />
-          </div>
-
-          <div className="achievement-grid">
-            {achievementItems.map((item) => (
-              <div
-                key={item.label}
-                className={`achievement ${item.active ? 'active' : ''}`}
-              >
-                <div className="achievement-icon">{item.icon}</div>
-                <div className="achievement-label">{item.label}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="details-card">
-          <div className="section-head">
-            <h2>Detalhes tÃ©cnicos</h2>
-            <span className="mini-badge">debug leve</span>
-          </div>
-
-          <div className="details-grid">
-            <InfoLine label="PrecisÃ£o GPS" value={`${gps.data.accuracy} m`} />
-            <InfoLine label="Velocidade" value={`${gps.data.speedMs} m/s`} />
-            <InfoLine
-              label="Passos estimados"
-              value={String(cadence.data.sessionSteps)}
-            />
-            <InfoLine
-              label="Buffer carregado"
-              value={music.data.hasAudioBuffer ? 'Sim' : 'NÃ£o'}
-            />
-            <InfoLine label="Status calibraÃ§Ã£o" value={cal.data.status} />
-            <InfoLine
-              label="Passada calibrada"
-              value={`${cal.data.strideM.toFixed(4)} m`}
-            />
-          </div>
-
-          <div className="calibration-actions">
-            {!calRunning ? (
-              <button
-                className="secondary-btn"
-                onClick={() =>
-                  cal.startCalibration(
-                    cadence.data.sessionSteps,
-                    gps.data.smoothedDistance
-                  )
-                }
-                disabled={!gpsActive}
-              >
-                Iniciar calibraÃ§Ã£o
-              </button>
-            ) : (
-              <button
-                className="secondary-btn secondary-btn-green"
-                onClick={() =>
-                  cal.finishCalibration(
-                    cadence.data.sessionSteps,
-                    gps.data.smoothedDistance
-                  )
-                }
-              >
-                Finalizar calibraÃ§Ã£o
-              </button>
-            )}
-
-            <button className="secondary-btn" onClick={cal.reset}>
-              Reset calibraÃ§Ã£o
-            </button>
-          </div>
-        </section>
-
-        <footer className="bottom-actions">
-          {!gpsActive ? (
-            <button className="run-btn-main" onClick={handleStart}>
-              â–¶ Iniciar corrida
-            </button>
-          ) : (
-            <button className="run-btn-main run-btn-stop" onClick={handleStop}>
-              â–  Parar corrida
-            </button>
-          )}
-
-          <button className="reset-btn-main" onClick={handleReset}>
-            â†º
-          </button>
-        </footer>
-      </main>
-    </div>
-  );
+/* Mapa */
+.map-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+  overflow: hidden;
+  padding-bottom: 0;
 }
 
-function MetricCard({
-  color,
-  label,
-  value,
-  unit,
-}: {
-  color: 'green' | 'blue' | 'orange';
-  label: string;
-  value: string | number;
-  unit?: string;
-}) {
-  return (
-    <div className={`metric-card-ui metric-${color}`}>
-      <div className="metric-card-value">
-        {value}
-        {unit ? <span>{unit}</span> : null}
-      </div>
-      <div className="metric-card-label">{label}</div>
-    </div>
-  );
+.map-card .section-head {
+  padding: 18px 16px 12px;
+  margin-bottom: 0;
 }
 
-function InfoLine({
-  label,
-  value,
-  sub,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-}) {
-  return (
-    <div className="info-line">
-      <div>
-        <div className="info-label">{label}</div>
-        {sub ? <div className="info-sub">{sub}</div> : null}
-      </div>
-      <div className="info-value">{value}</div>
-    </div>
-  );
+.map-placeholder {
+  height: 120px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 16px;
 }
 
-function formatElapsed(s: number): string {
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${m}:${String(sec).padStart(2, '0')}`;
-}
-===== C:\runcadence\src\components\RunningMap.tsx =====
-import React, { useEffect, useRef } from 'react';
-import type { GPSPoint } from './useRunningPlugin';
-
-interface MapProps {
-  route: GPSPoint[];
-  isTracking: boolean;
-  distance: number;
-}
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// COMPONENTE: RunningMap
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Usa Leaflet para mostrar mapa em tempo real com rota atual
-
-export const RunningMap: React.FC<MapProps> = ({ route, isTracking, distance }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any>(null);
-  const polylineRef = useRef<any>(null);
-  const markerRef = useRef<any>(null);
-
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // Inicializar Leaflet
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    // Carregar Leaflet via CDN
-    if (!(window as any).L) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
-      document.head.appendChild(link);
-
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
-      script.onload = () => {
-        initMap();
-      };
-      document.body.appendChild(script);
-    } else {
-      initMap();
-    }
-
-    function initMap() {
-      const L = (window as any).L;
-
-      // â”€â”€â”€â”€â”€ Centro padrÃ£o (seu app estÃ¡ em Pernambuco, BR)
-      const defaultCenter = [-8.7639, -40.5084]; // Petrolina
-
-      mapRef.current = L.map(containerRef.current).setView(defaultCenter, 16);
-
-      // Tile layer OpenStreetMap
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19,
-      }).addTo(mapRef.current);
-    }
-  }, []);
-
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // Atualizar rota no mapa
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-  useEffect(() => {
-    if (!mapRef.current || route.length === 0) return;
-
-    const L = (window as any).L;
-
-    // Remover polyline anterior
-    if (polylineRef.current) {
-      mapRef.current.removeLayer(polylineRef.current);
-    }
-
-    // Criar nova polyline
-    const coords = route.map((p) => [p.lat, p.lng]);
-    polylineRef.current = L.polyline(coords, {
-      color: '#00e676',
-      weight: 4,
-      opacity: 0.8,
-      smoothFactor: 1.0,
-    }).addTo(mapRef.current);
-
-    // Centralizar no Ãºltimo ponto
-    const lastPoint = route[route.length - 1];
-    mapRef.current.panTo([lastPoint.lat, lastPoint.lng]);
-  }, [route]);
-
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // Atualizar marcador final
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-  useEffect(() => {
-    if (!mapRef.current || route.length === 0) return;
-
-    const L = (window as any).L;
-    const lastPoint = route[route.length - 1];
-
-    // Remover marcador anterior
-    if (markerRef.current) {
-      mapRef.current.removeLayer(markerRef.current);
-    }
-
-    // Criar novo marcador (cÃ­rculo pulsando)
-    markerRef.current = L.circleMarker([lastPoint.lat, lastPoint.lng], {
-      radius: 8,
-      fillColor: isTracking ? '#00e676' : '#ff6b35',
-      color: '#000',
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.8,
-    }).addTo(mapRef.current);
-  }, [route, isTracking]);
-
-  return (
-    <div
-      ref={containerRef}
-      style={{
-        width: '100%',
-        height: '320px',
-        borderRadius: '20px',
-        overflow: 'hidden',
-        border: '1px solid rgba(0, 230, 118, 0.2)',
-        marginBottom: '16px',
-      }}
-    >
-      {route.length === 0 && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            background: 'var(--card)',
-            color: 'var(--muted)',
-            fontSize: '14px',
-          }}
-        >
-          Mapa aparecerÃ¡ aqui (GPS ativo)
-        </div>
-      )}
-    </div>
-  );
-};
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// COMPONENTE: RouteStats
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Mostra estatÃ­sticas da rota
-
-interface RouteStatsProps {
-  distance: number; // metros
-  pointCount: number;
-  accuracy: number;
-}
-
-export const RouteStats: React.FC<RouteStatsProps> = ({
-  distance,
-  pointCount,
-  accuracy,
-}) => {
-  const distanceKm = (distance / 1000).toFixed(2);
-  const accuracyM = Math.round(accuracy);
-
-  return (
-    <div
-      style={{
-        background: 'var(--card)',
-        border: '1px solid var(--border)',
-        borderRadius: '20px',
-        padding: '16px',
-        marginBottom: '16px',
-      }}
-    >
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-        <div>
-          <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '4px' }}>
-            DistÃ¢ncia (Haversine)
-          </div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--green)' }}>
-            {distanceKm} km
-          </div>
-        </div>
-
-        <div>
-          <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '4px' }}>
-            PrecisÃ£o GPS
-          </div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--blue)' }}>
-            Â±{accuracyM}m
-          </div>
-        </div>
-
-        <div style={{ gridColumn: '1 / -1' }}>
-          <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '4px' }}>
-            Pontos Registrados
-          </div>
-          <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--yellow)' }}>
-            {pointCount} pontos
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-===== C:\runcadence\src\hooks\APP_TSX_MUDANCAS.ts =====
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// MUDANÃ‡AS EXATAS EM App.tsx
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 1. ADICIONAR IMPORTS NO TOPO DO ARQUIVO
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-import { useRunningPlugin } from './hooks/useRunningPlugin';
-import { RunningMap, RouteStats } from './components/RunningMap';
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 2. DENTRO DE function App() { }, PROCURAR POR:
-//    const stepCounter = useStepCounter();
-//    E ADICIONAR LOGO ABAIXO:
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-const stepCounter = useStepCounter();
-const cadenceTracker = useCadence();
-const musicEngine = useMusicEngine();
-const gpsRunning = useRunningPlugin();  // â† NOVA LINHA
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 3. PROCURAR POR: const handleStart = async () => {
-//    E MODIFICAR PARA:
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-const handleStart = async () => {
-  try {
-    setIsRunning(true);
-    
-    await stepCounter.start();
-    await gpsRunning.start();  // â† NOVA LINHA: Iniciar GPS real
-    
-    cadenceTracker.reset();
-  } catch (err) {
-    alert(`Erro ao iniciar: ${err}`);
-    setIsRunning(false);
-  }
-};
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 4. PROCURAR POR: const handleStop = () => {
-//    E MODIFICAR PARA:
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-const handleStop = async () => {
-  setIsRunning(false);
-  
-  await stepCounter.stop();
-  await gpsRunning.stop();  // â† NOVA LINHA: Parar GPS
-  
-  musicEngine.stop();
-};
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 5. PROCURAR POR: useEffect(() => {
-//    QUE CONTÃ‰M: if (stepCounter.data.sensorStatus === 'active') {
-//    E MODIFICAR PARA:
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-useEffect(() => {
-  let interval: ReturnType<typeof setInterval> | null = null;
-
-  if (stepCounter.data.sensorStatus === 'active') {
-    // â† NOVO: Usar distÃ¢ncia real do GPS
-    const realDistance = Math.max(gpsRunning.state.distance, 0.001);
-    const strideM = (realDistance / Math.max(1, stepCounter.data.sessionSteps)) || 0.7;
-
-    interval = setInterval(() => {
-      const currentSPM = stepCounter.data.stepsPerMinute;
-      const paceMinKm = cadenceTracker.data.currentPaceMinKm;
-
-      musicEngine.tick(currentSPM, strideM, paceMinKm);
-    }, 500);
-  }
-
-  return () => {
-    if (interval) clearInterval(interval);
-  };
-}, [
-  stepCounter.data.sensorStatus,
-  stepCounter.data.stepsPerMinute,
-  stepCounter.data.sessionSteps,
-  gpsRunning.state.distance,  // â† NOVA LINHA: Dependency
-  cadenceTracker.data.currentPaceMinKm,
-]);
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 6. NO JSX DENTRO DE <div className="app-screen">
-//    PROCURAR POR: <div className="topbar">
-//    E MODIFICAR PARA:
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-<div className="topbar">
-  <div className="brand">
-    <div className="brand-icon">ðŸƒ</div>
-    <div>
-      <h1>RunCadence</h1>
-      <p>Sync + CadÃªncia</p>
-    </div>
-  </div>
-  <div
-    className={`gps-pill ${gpsRunning.state.isTracking ? 'gps-on' : 'gps-off'}`}
-  >
-    <div className="gps-dot"></div>
-    {gpsRunning.state.isTracking ? 'GPS ON' : 'GPS OFF'}
-  </div>
-</div>
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 7. NO JSX, PROCURAR POR: <div className="hero-card">
-//    E MODIFICAR A SEÃ‡ÃƒO HERO PARA:
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-<div className="hero-card">
-  <div className="hero-top">
-    <div>
-      <div className="eyebrow">DistÃ¢ncia GPS (Haversine)</div>
-      <div className="hero-pace">
-        {(gpsRunning.state.distance / 1000).toFixed(2)}
-      </div>
-      <div className="hero-unit">km</div>
-    </div>
-    <div className="hero-target">
-      <div
-        className="target-ring"
-        style={{
-          animation: gpsRunning.state.isTracking
-            ? 'pulse 2s infinite'
-            : 'none',
-        }}
-      />
-    </div>
-  </div>
-</div>
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 8. LOGO APÃ“S </div> DO HERO-CARD, ADICIONAR:
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-{/* MAPA INTERATIVO */}
-<RunningMap
-  route={gpsRunning.state.route}
-  isTracking={gpsRunning.state.isTracking}
-  distance={gpsRunning.state.distance}
-/>
-
-{/* ESTATÃSTICAS DA ROTA */}
-<RouteStats
-  distance={gpsRunning.state.distance}
-  pointCount={gpsRunning.state.pointCount}
-  accuracy={gpsRunning.state.lastPoint?.accuracy || 0}
-/>
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 9. NO App.css, ADICIONAR NO FINAL:
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-@keyframes pulse {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.6;
-    transform: scale(1.1);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// FIM DAS MUDANÃ‡AS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
-===== C:\runcadence\src\hooks\PATCH_App_BPM.ts =====
-// â”€â”€â”€ PATCH: substitua a seÃ§Ã£o inteira da <section className="player-card"> â”€â”€â”€
-// no seu App.tsx pelo trecho abaixo.
-// Adiciona: estado bpmInput, botÃµes +/- de BPM e input de ediÃ§Ã£o manual.
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-// 1. Adicione este estado logo apÃ³s os outros useState no topo do componente App():
-//
-//    const [bpmInput, setBpmInput] = useState('');
-//
-// useEffect para sincronizar bpmInput quando BPM Ã© detectado automaticamente:
-//
-//    useEffect(() => {
-//      if (music.data.bpm > 0 && bpmInput === '') {
-//        setBpmInput(String(music.data.bpm));
-//      }
-//    }, [music.data.bpm]);
-//
-// FunÃ§Ã£o para aplicar BPM manual:
-//
-//    function handleBpmChange(val: string) {
-//      setBpmInput(val);
-//      const n = parseInt(val, 10);
-//      if (!isNaN(n) && n >= 60 && n <= 200) {
-//        music.setManualBPM(n);
-//      }
-//    }
-//
-//    function adjustBpm(delta: number) {
-//      const current = parseInt(bpmInput || String(music.data.bpm || 120), 10);
-//      const next = Math.min(200, Math.max(60, current + delta));
-//      setBpmInput(String(next));
-//      music.setManualBPM(next);
-//    }
-
-// 2. Substitua a <section className="player-card"> inteira por esta:
-
-/*
-<section className="player-card">
-  <div className="section-head">
-    <h2>MÃºsica</h2>
-    <span className="mini-badge">
-      {musicPlaying ? 'tocando' : music.data.hasAudioBuffer ? 'pronta' : 'sem mÃºsica'}
-    </span>
-  </div>
-
-  <div className="player-track">
-    <div className="track-art">ðŸŽµ</div>
-
-    <div className="track-meta">
-      <div className="track-title">
-        {music.data.fileName || 'Nenhuma mÃºsica carregada'}
-      </div>
-      <div className="track-subtitle">
-        {music.data.fileName
-          ? 'arquivo carregado para o treino'
-          : 'adicione uma faixa para sincronizar com o pace'}
-      </div>
-
-      <div className="track-tags">
-        <span className="track-tag track-tag-blue">
-          {music.data.playbackRate.toFixed(2)}Ã—
-        </span>
-        <span className="track-tag track-tag-purple">
-          passada {dynamicStride.toFixed(2)}m
-        </span>
-      </div>
-    </div>
-  </div>
-
-  {/* â”€â”€ BPM EDITOR â”€â”€ */}
-  <div className="bpm-editor">
-    <span className="bpm-editor-label">BPM da mÃºsica</span>
-    <div className="bpm-editor-row">
-      <button
-        className="step-btn"
-        onClick={() => adjustBpm(-1)}
-        disabled={!music.data.hasAudioBuffer}
-      >
-        âˆ’
-      </button>
-      <input
-        className="bpm-input"
-        type="number"
-        min="60"
-        max="200"
-        value={bpmInput}
-        onChange={(e) => handleBpmChange(e.target.value)}
-        disabled={!music.data.hasAudioBuffer}
-      />
-      <button
-        className="step-btn"
-        onClick={() => adjustBpm(1)}
-        disabled={!music.data.hasAudioBuffer}
-      >
-        +
-      </button>
-    </div>
-    {music.data.bpm > 0 && (
-      <div className="bpm-detected">
-        BPM detectado automaticamente: {music.data.bpm}
-      </div>
-    )}
-  </div>
-
-  <div className="waveform">
-    {Array.from({ length: 36 }).map((_, i) => (
-      <span
-        key={i}
-        className={`wave-bar ${
-          i < 16 ? 'wave-played' : i === 16 ? 'wave-current' : ''
-        }`}
-        style={{ height: `${30 + ((i * 13) % 55)}%` }}
-      />
-    ))}
-  </div>
-
-  <div className="time-row">
-    <span>0:00</span>
-    <span>--:--</span>
-  </div>
-
-  <div className="mode-switch">
-    {(['follow_music', 'target_pace'] as MusicMode[]).map((m) => (
-      <button
-        key={m}
-        className={`mode-btn ${music.data.mode === m ? 'mode-btn-active' : ''}`}
-        onClick={() => music.setMode(m)}
-      >
-        {m === 'follow_music' ? 'Seguir mÃºsica' : 'Pace-alvo'}
-      </button>
-    ))}
-  </div>
-
-  {music.data.mode === 'target_pace' && (
-    <div className="target-input-card">
-      <label htmlFor="targetPace">Pace-alvo (min/km)</label>
-      <input
-        id="targetPace"
-        type="number"
-        step="0.05"
-        min="3"
-        max="15"
-        value={targetPaceInput}
-        onChange={(e) => setTargetPaceInput(e.target.value)}
-      />
-    </div>
-  )}
-
-  <div className="upload-row">
-    <label className="upload-btn">
-      Carregar mÃºsica
-      <input type="file" accept="audio/*" onChange={handleFileChange} />
-    </label>
-
-    <div className="player-controls">
-      <button className="icon-btn" onClick={music.stop}>
-        â– 
-      </button>
-      <button
-        className="play-btn"
-        onClick={musicPlaying ? music.pause : music.play}
-        disabled={!music.data.hasAudioBuffer}
-      >
-        {musicPlaying ? 'Pausar' : 'Play'}
-      </button>
-    </div>
-  </div>
-</section>
-*/
-
-// 3. Adicione este CSS no final do App.css:
-/*
+/* BPM Editor */
 .bpm-editor {
   margin-bottom: 16px;
   padding: 14px;
@@ -2216,8 +1109,8 @@ useEffect(() => {
 
 .bpm-editor-label {
   display: block;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 800;
   color: var(--muted-2);
   margin-bottom: 10px;
   text-transform: uppercase;
@@ -2259,7 +1152,594 @@ useEffect(() => {
   color: var(--muted);
   text-align: center;
 }
-*/
+
+===== C:\runcadence\src\App.tsx =====
+// src/App.tsx â€” SUBSTITUI O ARQUIVO ANTERIOR INTEIRO
+// MudanÃ§as: nome PaceUp, mapa integrado, editor de BPM, useRunningPlugin removido
+
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useGPS, formatPace } from './hooks/useGPS';
+import { useCalibration } from './hooks/useCalibration';
+import { useMusicEngine } from './hooks/useMusicEngine';
+import { useCadence } from './hooks/useCadence';
+import { RouteMap } from './components/RouteMap';
+import type { MusicMode } from './hooks/useMusicEngine';
+import './App.css';
+
+export default function App() {
+  const gps   = useGPS();
+  const cal   = useCalibration();
+  const music = useMusicEngine();
+
+  const rawStride     = cal.data.strideM * (1 + (gps.data.speedMs - 3) * 0.05);
+  const dynamicStride = Math.min(
+    cal.data.strideM * 1.12,
+    Math.max(cal.data.strideM * 0.88, rawStride)
+  );
+
+  const cadence = useCadence(gps.data.speedMs, gps.data.smoothedDistance, dynamicStride);
+
+  const [targetPaceInput, setTargetPaceInput] = useState('5.30');
+
+  // â”€â”€ BPM manual â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const [bpmInput, setBpmInput] = useState('');
+
+  useEffect(() => {
+    if (music.data.bpm > 0) {
+      setBpmInput((prev) => prev || String(music.data.bpm));
+    }
+  }, [music.data.bpm]);
+
+  function handleBpmChange(val: string) {
+    setBpmInput(val);
+    const n = parseInt(val, 10);
+    if (!isNaN(n) && n >= 60 && n <= 200) {
+      music.setManualBPM(n);
+    }
+  }
+
+  function adjustBpm(delta: number) {
+    const current = parseInt(bpmInput || String(music.data.bpm || 120), 10);
+    const next    = Math.min(200, Math.max(60, current + delta));
+    setBpmInput(String(next));
+    music.setManualBPM(next);
+  }
+
+  // â”€â”€ Refs para o tick de mÃºsica â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const tickRef    = useRef(music.tick);
+  const spmRef     = useRef(cadence.data.stepsPerMinute);
+  const strideRef  = useRef(dynamicStride);
+  const modeRef    = useRef(music.data.mode);
+  const tpInputRef = useRef(targetPaceInput);
+
+  useEffect(() => { tickRef.current   = music.tick;                   }, [music.tick]);
+  useEffect(() => { spmRef.current    = cadence.data.stepsPerMinute;  }, [cadence.data.stepsPerMinute]);
+  useEffect(() => { strideRef.current = dynamicStride;                }, [dynamicStride]);
+  useEffect(() => { modeRef.current   = music.data.mode;              }, [music.data.mode]);
+  useEffect(() => { tpInputRef.current = targetPaceInput;             }, [targetPaceInput]);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const tp = modeRef.current === 'target_pace'
+        ? parseFloat(tpInputRef.current) || 0
+        : undefined;
+      tickRef.current(spmRef.current, strideRef.current, tp);
+    }, 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  // â”€â”€ Derivados â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const gpsActive   = gps.data.status === 'active';
+  const calRunning  = cal.data.status === 'running';
+  const musicPlaying = music.data.status === 'playing';
+
+  const paceBySPM   = cadence.data.stepsPerMinute > 0
+    ? 1000 / (cadence.data.stepsPerMinute * dynamicStride)
+    : 0;
+
+  const paceError   = gps.data.averagePace > 0 && paceBySPM > 0
+    ? Math.abs(gps.data.averagePace - paceBySPM)
+    : 0;
+
+  const paceErrorLabel = paceError === 0 ? '--'
+    : paceError < 0.2   ? 'Perfeito'
+    : paceError < 0.4   ? 'Aceitavel'
+    : 'Verificar';
+
+  const targetPaceNumber = parseFloat(targetPaceInput) || 0;
+  const heroPace         = gps.data.averagePace > 0 ? gps.data.averagePace : 0;
+  const heroPaceText     = heroPace > 0 ? formatPace(heroPace) : '--:--';
+
+  const paceDiff = useMemo(() => {
+    if (!heroPace || !targetPaceNumber) return null;
+    return heroPace - targetPaceNumber;
+  }, [heroPace, targetPaceNumber]);
+
+  const levelProgress = Math.min(100, Math.round((gps.data.smoothedDistance / 5000) * 100));
+
+  // â”€â”€ Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  async function handleStart() { await gps.start(); }
+
+  async function handleStop() {
+    await gps.stop();
+    music.stop();
+    cadence.reset();
+  }
+
+  function handleReset() {
+    gps.resetSession();
+    cadence.reset();
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) { music.loadFile(file); setBpmInput(''); }
+  }
+
+  const error = gps.data.error || cal.data.error || music.data.error;
+
+  const achievementItems = [
+    { icon: 'ðŸ”¥', label: 'Sequencia',  active: cadence.data.elapsedSeconds > 0 },
+    { icon: 'âš¡', label: 'Ritmo',      active: gps.data.speedMs > 1.8 },
+    { icon: 'ðŸŽµ', label: 'Musica',     active: music.data.hasAudioBuffer },
+    { icon: 'ðŸ“', label: 'GPS',        active: gpsActive },
+  ];
+
+  return (
+    <div className="app-shell">
+      <div className="app-bg-glow app-bg-glow-1" />
+      <div className="app-bg-glow app-bg-glow-2" />
+
+      <main className="app-screen">
+
+        {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <header className="topbar">
+          <div className="brand">
+            <div className="brand-icon">ðŸƒ</div>
+            <div>
+              <h1>PaceUp</h1>
+              <p>corrida com musica no ritmo certo</p>
+            </div>
+          </div>
+          <div className={`gps-pill ${gpsActive ? 'gps-on' : 'gps-off'}`}>
+            <span className="gps-dot" />
+            {gpsActive ? 'GPS ativo' : 'GPS pronto'}
+          </div>
+        </header>
+
+        {error && <div className="alert-box">âš ï¸ {error}</div>}
+
+        {/* â”€â”€ Hero pace â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <section className="hero-card">
+          <div className="hero-top">
+            <div>
+              <span className="eyebrow">Pace atual</span>
+              <div className="hero-pace">{heroPaceText}</div>
+              <div className="hero-unit">min/km</div>
+            </div>
+            <div className="hero-target">
+              <div className="target-ring">
+                <div className="target-ring-inner">
+                  <strong>
+                    {music.data.targetPace > 0
+                      ? formatPace(music.data.targetPace)
+                      : formatPace(targetPaceNumber)}
+                  </strong>
+                  <span>alvo</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="hero-diff-row">
+            <div className="hero-diff-badge">
+              {paceDiff === null
+                ? 'Sem comparacao'
+                : paceDiff < 0
+                ? `â–² ${Math.abs(paceDiff).toFixed(2)} abaixo do alvo`
+                : `â–¼ ${paceDiff.toFixed(2)} acima do alvo`}
+            </div>
+          </div>
+        </section>
+
+        {/* â”€â”€ Metrics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <section className="metrics-grid">
+          <MetricCard color="green"  label="Cadencia" value={cadence.data.stepsPerMinute || 0} unit="spm" />
+          <MetricCard color="blue"   label="Distancia" value={(gps.data.smoothedDistance / 1000).toFixed(2)} unit="km" />
+          <MetricCard color="orange" label="Tempo"     value={formatElapsed(cadence.data.elapsedSeconds)} />
+        </section>
+
+        {/* â”€â”€ Pace comparison â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <section className="pace-bars-card">
+          <div className="section-head">
+            <h2>Pace e comparacao</h2>
+            <span className="mini-badge">
+              {gps.data.averagePace > 0 ? 'ao vivo' : 'aguardando'}
+            </span>
+          </div>
+          <div className="comparison-grid">
+            <InfoLine label="Pace medio GPS"    value={formatPace(gps.data.averagePace)} />
+            <InfoLine label="Pace por formula"  value={formatPace(paceBySPM)} />
+            <InfoLine
+              label="Pace-alvo"
+              value={music.data.targetPace > 0
+                ? formatPace(music.data.targetPace)
+                : formatPace(targetPaceNumber)}
+            />
+            <InfoLine
+              label="Erro GPS x formula"
+              value={paceError > 0 ? `${paceError.toFixed(2)} min/km` : '--'}
+              sub={paceError > 0 ? paceErrorLabel : undefined}
+            />
+          </div>
+        </section>
+
+        {/* â”€â”€ MAPA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <section className="map-card">
+          <div className="section-head" style={{ padding: '18px 16px 0' }}>
+            <h2>Mapa do trajeto</h2>
+            <span className="mini-badge">{gps.data.routePoints.length} pts</span>
+          </div>
+          {gpsActive || gps.data.routePoints.length > 0 ? (
+            <RouteMap
+              routePoints={gps.data.routePoints}
+              currentLat={gps.data.lat}
+              currentLng={gps.data.lng}
+              isActive={gpsActive}
+            />
+          ) : (
+            <div className="map-placeholder">
+              <span>Inicie a corrida para ver o trajeto</span>
+            </div>
+          )}
+        </section>
+
+        {/* â”€â”€ Musica â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <section className="player-card">
+          <div className="section-head">
+            <h2>Musica</h2>
+            <span className="mini-badge">
+              {musicPlaying ? 'tocando' : music.data.hasAudioBuffer ? 'pronta' : 'sem musica'}
+            </span>
+          </div>
+
+          <div className="player-track">
+            <div className="track-art">ðŸŽµ</div>
+            <div className="track-meta">
+              <div className="track-title">
+                {music.data.fileName || 'Nenhuma musica carregada'}
+              </div>
+              <div className="track-subtitle">
+                {music.data.fileName ? 'arquivo carregado para o treino' : 'adicione uma faixa para sincronizar'}
+              </div>
+              <div className="track-tags">
+                <span className="track-tag track-tag-blue">{music.data.playbackRate.toFixed(2)}x</span>
+                <span className="track-tag track-tag-purple">passada {dynamicStride.toFixed(2)}m</span>
+              </div>
+            </div>
+          </div>
+
+          {/* BPM Editor */}
+          <div className="bpm-editor">
+            <span className="bpm-editor-label">BPM da musica</span>
+            <div className="bpm-editor-row">
+              <button className="step-btn" onClick={() => adjustBpm(-1)} disabled={!music.data.hasAudioBuffer}>âˆ’</button>
+              <input
+                className="bpm-input"
+                type="number"
+                min="60"
+                max="200"
+                value={bpmInput}
+                onChange={(e) => handleBpmChange(e.target.value)}
+                disabled={!music.data.hasAudioBuffer}
+              />
+              <button className="step-btn" onClick={() => adjustBpm(1)} disabled={!music.data.hasAudioBuffer}>+</button>
+            </div>
+            {music.data.bpm > 0 && (
+              <div className="bpm-detected">BPM detectado automaticamente: {music.data.bpm}</div>
+            )}
+          </div>
+
+          <div className="waveform">
+            {Array.from({ length: 36 }).map((_, i) => (
+              <span
+                key={i}
+                className={`wave-bar ${i < 16 ? 'wave-played' : i === 16 ? 'wave-current' : ''}`}
+                style={{ height: `${30 + ((i * 13) % 55)}%` }}
+              />
+            ))}
+          </div>
+          <div className="time-row"><span>0:00</span><span>--:--</span></div>
+
+          <div className="mode-switch">
+            {(['follow_music', 'target_pace'] as MusicMode[]).map((m) => (
+              <button
+                key={m}
+                className={`mode-btn ${music.data.mode === m ? 'mode-btn-active' : ''}`}
+                onClick={() => music.setMode(m)}
+              >
+                {m === 'follow_music' ? 'Seguir musica' : 'Pace-alvo'}
+              </button>
+            ))}
+          </div>
+
+          {music.data.mode === 'target_pace' && (
+            <div className="target-input-card">
+              <label htmlFor="targetPace">Pace-alvo (min/km)</label>
+              <input
+                id="targetPace"
+                type="number"
+                step="0.05"
+                min="3"
+                max="15"
+                value={targetPaceInput}
+                onChange={(e) => setTargetPaceInput(e.target.value)}
+              />
+            </div>
+          )}
+
+          <div className="upload-row">
+            <label className="upload-btn">
+              Carregar musica
+              <input type="file" accept="audio/*" onChange={handleFileChange} />
+            </label>
+            <div className="player-controls">
+              <button className="icon-btn" onClick={music.stop}>â– </button>
+              <button
+                className="play-btn"
+                onClick={musicPlaying ? music.pause : music.play}
+                disabled={!music.data.hasAudioBuffer}
+              >
+                {musicPlaying ? 'Pausar' : 'Play'}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* â”€â”€ Controle de pace â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <section className="control-card">
+          <div className="section-head">
+            <h2>Controle de pace</h2>
+            <span className="mini-badge">
+              {music.data.mode === 'target_pace' ? 'auto ativo' : 'manual'}
+            </span>
+          </div>
+          <div className="pace-control-box">
+            <button
+              className="step-btn"
+              onClick={() =>
+                setTargetPaceInput((prev) =>
+                  Math.max(3, parseFloat(prev || '5.30') - 0.05).toFixed(2)
+                )
+              }
+            >
+              âˆ’
+            </button>
+            <div className="pace-display-box">
+              <div className="pace-display-value">{targetPaceNumber.toFixed(2)}</div>
+              <div className="pace-display-unit">min/km</div>
+            </div>
+            <button
+              className="step-btn"
+              onClick={() =>
+                setTargetPaceInput((prev) =>
+                  Math.min(15, parseFloat(prev || '5.30') + 0.05).toFixed(2)
+                )
+              }
+            >
+              +
+            </button>
+          </div>
+        </section>
+
+        {/* â”€â”€ Progresso â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <section className="progress-card">
+          <div className="section-head">
+            <h2>Progresso</h2>
+            <span className="mini-badge">{levelProgress}% da meta de 5 km</span>
+          </div>
+          <div className="xp-row">
+            <div>
+              <div className="xp-title">Meta da sessao</div>
+              <div className="xp-sub">
+                {(gps.data.smoothedDistance / 1000).toFixed(2)} km de 5.00 km
+              </div>
+            </div>
+            <div className="xp-value">{Math.round(gps.data.smoothedDistance)} XP</div>
+          </div>
+          <div className="xp-bar">
+            <div className="xp-fill" style={{ width: `${levelProgress}%` }} />
+          </div>
+          <div className="achievement-grid">
+            {achievementItems.map((item) => (
+              <div key={item.label} className={`achievement ${item.active ? 'active' : ''}`}>
+                <div className="achievement-icon">{item.icon}</div>
+                <div className="achievement-label">{item.label}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* â”€â”€ Detalhes tecnicos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <section className="details-card">
+          <div className="section-head">
+            <h2>Detalhes tecnicos</h2>
+            <span className="mini-badge">debug leve</span>
+          </div>
+          <div className="details-grid">
+            <InfoLine label="Precisao GPS"      value={`${gps.data.accuracy} m`} />
+            <InfoLine label="Velocidade"         value={`${gps.data.speedMs} m/s`} />
+            <InfoLine label="Passos estimados"   value={String(cadence.data.sessionSteps)} />
+            <InfoLine label="Buffer carregado"   value={music.data.hasAudioBuffer ? 'Sim' : 'Nao'} />
+            <InfoLine label="Status calibracao"  value={cal.data.status} />
+            <InfoLine label="Passada calibrada"  value={`${cal.data.strideM.toFixed(4)} m`} />
+          </div>
+          <div className="calibration-actions">
+            {!calRunning ? (
+              <button
+                className="secondary-btn"
+                onClick={() => cal.startCalibration(cadence.data.sessionSteps, gps.data.smoothedDistance)}
+                disabled={!gpsActive}
+              >
+                Iniciar calibracao
+              </button>
+            ) : (
+              <button
+                className="secondary-btn secondary-btn-green"
+                onClick={() => cal.finishCalibration(cadence.data.sessionSteps, gps.data.smoothedDistance)}
+              >
+                Finalizar calibracao
+              </button>
+            )}
+            <button className="secondary-btn" onClick={cal.reset}>Reset calibracao</button>
+          </div>
+        </section>
+
+        {/* â”€â”€ Botoes fixos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <footer className="bottom-actions">
+          {!gpsActive ? (
+            <button className="run-btn-main" onClick={handleStart}>â–¶ Iniciar corrida</button>
+          ) : (
+            <button className="run-btn-main run-btn-stop" onClick={handleStop}>â–  Parar corrida</button>
+          )}
+          <button className="reset-btn-main" onClick={handleReset}>â†º</button>
+        </footer>
+
+      </main>
+    </div>
+  );
+}
+
+// â”€â”€ Sub-componentes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function MetricCard({ color, label, value, unit }: {
+  color: 'green' | 'blue' | 'orange';
+  label: string;
+  value: string | number;
+  unit?: string;
+}) {
+  return (
+    <div className={`metric-card-ui metric-${color}`}>
+      <div className="metric-card-value">
+        {value}{unit ? <span>{unit}</span> : null}
+      </div>
+      <div className="metric-card-label">{label}</div>
+    </div>
+  );
+}
+
+function InfoLine({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="info-line">
+      <div>
+        <div className="info-label">{label}</div>
+        {sub ? <div className="info-sub">{sub}</div> : null}
+      </div>
+      <div className="info-value">{value}</div>
+    </div>
+  );
+}
+
+function formatElapsed(s: number): string {
+  const m   = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${String(sec).padStart(2, '0')}`;
+}
+
+===== C:\runcadence\src\components\RouteMap.tsx =====
+// src/components/RouteMap.tsx
+// Crie a pasta src/components/ se ela nÃ£o existir.
+// Import CORRETO: vem de '../hooks/useGPS' (nÃ£o de useRunningPlugin)
+
+import { useEffect, useRef } from 'react';
+import type { RoutePoint } from '../hooks/useGPS';
+
+declare const L: any;
+
+interface RouteMapProps {
+  routePoints: RoutePoint[];
+  currentLat:  number;
+  currentLng:  number;
+  isActive:    boolean;
+}
+
+export function RouteMap({ routePoints, currentLat, currentLng, isActive }: RouteMapProps) {
+  const containerRef  = useRef<HTMLDivElement>(null);
+  const mapRef        = useRef<any>(null);
+  const polylineRef   = useRef<any>(null);
+  const markerRef     = useRef<any>(null);
+  const loadedRef     = useRef(false);
+
+  useEffect(() => {
+    if (loadedRef.current) return;
+
+    const link = document.createElement('link');
+    link.rel  = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+
+    const script    = document.createElement('script');
+    script.src      = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.async    = true;
+    script.onload   = () => { loadedRef.current = true; initMap(); };
+    document.head.appendChild(script);
+  }, []);
+
+  function initMap() {
+    if (!containerRef.current || mapRef.current) return;
+
+    const map = L.map(containerRef.current, {
+      zoomControl: true,
+      attributionControl: false,
+    }).setView([-8.9, -40.5], 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+    }).addTo(map);
+
+    polylineRef.current = L.polyline([], {
+      color: '#00e676', weight: 5, opacity: 0.9,
+      lineCap: 'round', lineJoin: 'round',
+    }).addTo(map);
+
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:16px;height:16px;border-radius:50%;background:#00e676;border:3px solid #fff;box-shadow:0 0 0 4px rgba(0,230,118,.3)"></div>`,
+      iconSize: [16, 16],
+      iconAnchor: [8, 8],
+    });
+
+    markerRef.current = L.marker([0, 0], { icon }).addTo(map);
+    mapRef.current    = map;
+  }
+
+  useEffect(() => {
+    if (!mapRef.current || routePoints.length === 0) return;
+
+    polylineRef.current?.setLatLngs(routePoints.map((p) => [p.lat, p.lng]));
+
+    if (currentLat !== 0 && currentLng !== 0) {
+      markerRef.current?.setLatLng([currentLat, currentLng]);
+      if (isActive) {
+        mapRef.current.setView([currentLat, currentLng], 17, { animate: true, duration: 0.5 });
+      }
+    }
+
+    if (routePoints.length === 1) {
+      mapRef.current.setView([routePoints[0].lat, routePoints[0].lng], 17);
+    }
+  }, [routePoints, currentLat, currentLng, isActive]);
+
+  useEffect(() => {
+    if (loadedRef.current && !mapRef.current) initMap();
+  });
+
+  return (
+    <div
+      ref={containerRef}
+      style={{ width: '100%', height: '220px', background: '#0d1118' }}
+    />
+  );
+}
 
 ===== C:\runcadence\src\hooks\useCadence.ts =====
 import { useState, useRef, useEffect } from 'react';
@@ -2461,26 +1941,22 @@ export function useCalibration() {
 }
 
 ===== C:\runcadence\src\hooks\useGPS.ts =====
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Caminho: src/hooks/useGPS.ts
-// Substitui o arquivo anterior INTEIRO por este.
-// Adiciona: lat, lng, routePoints (array do trajeto completo)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// src/hooks/useGPS.ts  â€” SUBSTITUI O ARQUIVO ANTERIOR INTEIRO
+// APAGUE tambÃ©m src/hooks/useRunningPlugin.ts â€” este arquivo jÃ¡ faz tudo.
 
 import { useState, useRef, useCallback } from 'react';
 import { registerPlugin } from '@capacitor/core';
 
-// â”€â”€ Interface do plugin nativo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface RunningPluginInterface {
   startTracking(): Promise<void>;
   stopTracking(): Promise<void>;
   addListener(
     event: 'gpsUpdate',
-    handler: (data: GPSUpdate) => void
+    handler: (data: GPSRawUpdate) => void
   ): Promise<{ remove: () => Promise<void> }>;
 }
 
-export interface GPSUpdate {
+interface GPSRawUpdate {
   distance:       number;
   speedMs:        number;
   accuracy:       number;
@@ -2491,14 +1967,13 @@ export interface GPSUpdate {
 }
 
 export interface RoutePoint {
-  lat: number;
-  lng: number;
+  lat:       number;
+  lng:       number;
   timestamp: number;
 }
 
 const RunningPlugin = registerPlugin<RunningPluginInterface>('RunningPlugin');
 
-// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function formatPace(p: number): string {
   if (!p || !Number.isFinite(p) || p <= 0 || p > 30) return '--:--';
   let m = Math.floor(p);
@@ -2507,7 +1982,6 @@ export function formatPace(p: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-// â”€â”€ Hook principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function useGPS() {
   const [data, setData] = useState({
     status:           'idle' as 'idle' | 'starting' | 'active' | 'error',
@@ -2522,8 +1996,8 @@ export function useGPS() {
     error:            null as string | null,
   });
 
-  const listenerRef   = useRef<{ remove: () => Promise<void> } | null>(null);
-  const routeRef      = useRef<RoutePoint[]>([]);
+  const listenerRef = useRef<{ remove: () => Promise<void> } | null>(null);
+  const routeRef    = useRef<RoutePoint[]>([]);
 
   const start = useCallback(async () => {
     try {
@@ -2531,21 +2005,13 @@ export function useGPS() {
       routeRef.current = [];
 
       listenerRef.current = await RunningPlugin.addListener('gpsUpdate', (update) => {
-        // SÃ³ adiciona ponto ao trajeto se tiver coordenadas vÃ¡lidas
         if (update.lat !== 0 && update.lng !== 0) {
-          const newPoint: RoutePoint = {
-            lat:       update.lat,
-            lng:       update.lng,
-            timestamp: Date.now(),
-          };
-
-          // Evita pontos duplicados (menos de 3 metros de diferenÃ§a)
+          const point: RoutePoint = { lat: update.lat, lng: update.lng, timestamp: Date.now() };
           const last = routeRef.current[routeRef.current.length - 1];
-          if (!last || haversineM(last.lat, last.lng, newPoint.lat, newPoint.lng) > 3) {
-            routeRef.current = [...routeRef.current, newPoint];
+          if (!last || haversineM(last.lat, last.lng, point.lat, point.lng) > 3) {
+            routeRef.current = [...routeRef.current, point];
           }
         }
-
         setData({
           status:           'active',
           smoothedDistance: Math.round(update.distance),
@@ -2572,9 +2038,7 @@ export function useGPS() {
       await RunningPlugin.stopTracking();
       await listenerRef.current?.remove();
       listenerRef.current = null;
-    } catch {
-      // silencioso
-    } finally {
+    } catch { /* silencioso */ } finally {
       setData((d) => ({ ...d, status: 'idle' }));
     }
   }, []);
@@ -2583,29 +2047,20 @@ export function useGPS() {
     routeRef.current = [];
     setData((d) => ({
       ...d,
-      smoothedDistance: 0,
-      averagePace:      0,
-      speedMs:          0,
-      accuracy:         0,
-      elapsedSeconds:   0,
-      lat:              0,
-      lng:              0,
-      routePoints:      [],
-      error:            null,
+      smoothedDistance: 0, averagePace: 0, speedMs: 0,
+      accuracy: 0, elapsedSeconds: 0, lat: 0, lng: 0,
+      routePoints: [], error: null,
     }));
   }, []);
 
   return { data, start, stop, resetSession };
 }
 
-// â”€â”€ Haversine: distÃ¢ncia em metros entre dois pontos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function haversineM(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R  = 6371000;
-  const Ï†1 = (lat1 * Math.PI) / 180;
-  const Ï†2 = (lat2 * Math.PI) / 180;
-  const Î”Ï† = ((lat2 - lat1) * Math.PI) / 180;
-  const Î”Î» = ((lng2 - lng1) * Math.PI) / 180;
-  const a  = Math.sin(Î”Ï† / 2) ** 2 + Math.cos(Ï†1) * Math.cos(Ï†2) * Math.sin(Î”Î» / 2) ** 2;
+  const R = 6371000;
+  const p1 = (lat1 * Math.PI) / 180, p2 = (lat2 * Math.PI) / 180;
+  const dp = ((lat2 - lat1) * Math.PI) / 180, dl = ((lng2 - lng1) * Math.PI) / 180;
+  const a = Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
@@ -2837,372 +2292,6 @@ export function useMusicEngine() {
   );
 
   return { data, loadFile, setManualBPM, setMode, play, pause, stop, tick };
-}
-
-===== C:\runcadence\src\hooks\useRunningPlugin.ts =====
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Plugins } from '@capacitor/core';
-
-const { RunningPlugin } = Plugins;
-
-export interface GPSPoint {
-  lat: number;
-  lng: number;
-  accuracy: number;
-  altitude?: number;
-  bearing?: number;
-  speed?: number;
-  timestamp?: number;
-}
-
-export interface RunningState {
-  isTracking: boolean;
-  distance: number; // metros
-  route: GPSPoint[];
-  lastPoint: GPSPoint | null;
-  error: string | null;
-  pointCount: number;
-}
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// HOOK: useRunningPlugin
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Gerencia GPS real, rota completa e cÃ¡lculo de distÃ¢ncia via Haversine
-
-export function useRunningPlugin() {
-  const [state, setState] = useState<RunningState>({
-    isTracking: false,
-    distance: 0,
-    route: [],
-    lastPoint: null,
-    error: null,
-    pointCount: 0,
-  });
-
-  const listenerRef = useRef<any>(null);
-  const distanceRefreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // 1. REGISTRAR LISTENER PARA ATUALIZAÃ‡Ã•ES EM TEMPO REAL
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-  const registerListener = useCallback(async () => {
-    try {
-      if (listenerRef.current) {
-        await listenerRef.current.remove();
-      }
-
-      listenerRef.current = await RunningPlugin?.addListener?.(
-        'location_update',
-        (event: any) => {
-          const newPoint: GPSPoint = {
-            lat: event.lat,
-            lng: event.lng,
-            accuracy: event.accuracy,
-            altitude: event.altitude,
-            bearing: event.bearing,
-            speed: event.speed,
-            timestamp: event.timestamp,
-          };
-
-          setState((prev) => ({
-            ...prev,
-            lastPoint: newPoint,
-            route: [...prev.route, newPoint],
-            pointCount: prev.pointCount + 1,
-          }));
-        }
-      );
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setState((prev) => ({ ...prev, error: `Erro ao registrar listener: ${msg}` }));
-    }
-  }, []);
-
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // 2. ATUALIZAR DISTÃ‚NCIA PERIODICAMENTE (a cada 2 segundos)
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-  const updateDistance = useCallback(async () => {
-    try {
-      const result = await RunningPlugin?.getDistance?.();
-      if (result) {
-        setState((prev) => ({
-          ...prev,
-          distance: result.distance || 0,
-        }));
-      }
-    } catch (err) {
-      // Silencioso - apenas continua
-    }
-  }, []);
-
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // 3. INICIAR RASTREAMENTO
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-  const start = useCallback(async () => {
-    try {
-      setState((prev) => ({ ...prev, error: null, route: [], pointCount: 0 }));
-
-      // Limpar intervalo anterior
-      if (distanceRefreshIntervalRef.current) {
-        clearInterval(distanceRefreshIntervalRef.current);
-      }
-
-      // Registrar listener
-      await registerListener();
-
-      // Iniciar plugin Android
-      await RunningPlugin?.startTracking?.();
-
-      // Atualizar distÃ¢ncia a cada 2 segundos
-      distanceRefreshIntervalRef.current = setInterval(() => {
-        updateDistance();
-      }, 2000);
-
-      setState((prev) => ({ ...prev, isTracking: true }));
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setState((prev) => ({ ...prev, error: msg, isTracking: false }));
-    }
-  }, [registerListener, updateDistance]);
-
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // 4. PARAR RASTREAMENTO
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-  const stop = useCallback(async () => {
-    try {
-      // Parar plugin
-      await RunningPlugin?.stopTracking?.();
-
-      // Remover listener
-      if (listenerRef.current) {
-        await listenerRef.current.remove();
-        listenerRef.current = null;
-      }
-
-      // Parar atualizaÃ§Ã£o de distÃ¢ncia
-      if (distanceRefreshIntervalRef.current) {
-        clearInterval(distanceRefreshIntervalRef.current);
-        distanceRefreshIntervalRef.current = null;
-      }
-
-      setState((prev) => ({ ...prev, isTracking: false }));
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setState((prev) => ({ ...prev, error: msg }));
-    }
-  }, []);
-
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // 5. OBTER ROTA COMPLETA
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-  const getRoute = useCallback(async () => {
-    try {
-      const result = await RunningPlugin?.getRoute?.();
-      return result?.route || [];
-    } catch (err) {
-      console.error('Erro ao obter rota:', err);
-      return [];
-    }
-  }, []);
-
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // 6. CLEANUP AO DESMONTAR
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-  useEffect(() => {
-    return () => {
-      if (state.isTracking) {
-        stop();
-      }
-      if (listenerRef.current) {
-        listenerRef.current.remove();
-      }
-      if (distanceRefreshIntervalRef.current) {
-        clearInterval(distanceRefreshIntervalRef.current);
-      }
-    };
-  }, []);
-
-  return {
-    state,
-    start,
-    stop,
-    getRoute,
-  };
-}
-
-===== C:\runcadence\src\hooks\useStepCounter.ts =====
-import { useState, useRef, useCallback } from 'react';
-import { CapacitorPedometer } from '@capgo/capacitor-pedometer';
-import type { PluginListenerHandle } from '@capacitor/core';
-
-export function useStepCounter() {
-  const [data, setData] = useState({
-    sensorStatus: 'idle',
-    totalSteps: 0,
-    sessionSteps: 0,
-    stepsPerMinute: 0,
-    elapsedSeconds: 0,
-    error: null as string | null,
-  });
-
-  const baseRef = useRef<number | null>(null);
-  const startTimeRef = useRef<number>(0);
-  const historyRef = useRef<{ t: number; steps: number }[]>([]);
-  const spmRef = useRef(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const listenerRef = useRef<PluginListenerHandle | null>(null);
-  const runningRef = useRef(false);
-
-  const calcSPM = useCallback((steps: number): number => {
-    const now = Date.now();
-    const last = historyRef.current[historyRef.current.length - 1];
-
-    // NÃ£o adiciona ponto se nÃ£o houve incremento (evita SPM falso)
-    if (last && last.steps === steps) return spmRef.current;
-
-    historyRef.current.push({ t: now, steps });
-
-    const cutoff = now - 10_000;
-    historyRef.current = historyRef.current.filter((p) => p.t > cutoff);
-
-    if (historyRef.current.length < 2) return spmRef.current;
-
-    const first = historyRef.current[0];
-    const newest = historyRef.current[historyRef.current.length - 1]!;
-    const deltaSteps = newest.steps - first.steps;
-    const deltaTime = (newest.t - first.t) / 60_000;
-
-    if (deltaTime <= 0 || deltaSteps < 0) return spmRef.current;
-
-    const rawSpm = deltaSteps / deltaTime;
-
-    // BUG ORIGINAL: sem smoothing â€” SPM oscilava muito com agrupamento de eventos.
-    // CORREÃ‡ÃƒO: EMA (70% anterior + 30% novo) para estabilizar a leitura.
-    const smoothed = Math.round(spmRef.current * 0.7 + rawSpm * 0.3);
-    spmRef.current = smoothed;
-    return smoothed;
-  }, []);
-
-  const start = useCallback(async () => {
-    try {
-      if (runningRef.current) return;
-
-      setData((d) => ({ ...d, sensorStatus: 'starting', error: null }));
-
-      // BUG ORIGINAL: sem verificar disponibilidade do sensor antes de pedir permissÃ£o.
-      // Em dispositivos sem chip de pedÃ´metro, a chamada seguinte falha sem mensagem clara.
-      const availability = await CapacitorPedometer.isAvailable();
-      if (!availability.stepCounting) {
-        setData((d) => ({
-          ...d,
-          sensorStatus: 'idle',
-          error: 'Sensor de passos nÃ£o disponÃ­vel neste dispositivo.',
-        }));
-        return;
-      }
-
-      let perm = await CapacitorPedometer.checkPermissions();
-      if (perm.activityRecognition !== 'granted') {
-        perm = await CapacitorPedometer.requestPermissions();
-      }
-
-      if (perm.activityRecognition !== 'granted') {
-        setData((d) => ({
-          ...d,
-          sensorStatus: 'idle',
-          error: 'PermissÃ£o de atividade fÃ­sica negada',
-        }));
-        return;
-      }
-
-      baseRef.current = null;
-      historyRef.current = [];
-      spmRef.current = 0;
-
-      if (listenerRef.current) {
-        await listenerRef.current.remove();
-        listenerRef.current = null;
-      }
-
-      listenerRef.current = await CapacitorPedometer.addListener(
-        'measurement',
-        (e: any) => {
-          const total = e?.numberOfSteps ?? 0;
-
-          if (baseRef.current === null) {
-            baseRef.current = total;
-          }
-
-          const sessionSteps = Math.max(0, total - baseRef.current);
-          const spm = calcSPM(total);
-
-          setData((d) => ({
-            ...d,
-            sensorStatus: 'active',
-            totalSteps: total,
-            sessionSteps,
-            stepsPerMinute: spm,
-            error: null,
-          }));
-        }
-      );
-
-      await CapacitorPedometer.startMeasurementUpdates();
-
-      startTimeRef.current = Date.now();
-      runningRef.current = true;
-
-      if (timerRef.current) clearInterval(timerRef.current);
-
-      timerRef.current = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        setData((d) => ({ ...d, elapsedSeconds: elapsed }));
-      }, 1000);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setData((d) => ({ ...d, sensorStatus: 'idle', error: msg }));
-    }
-  }, [calcSPM]);
-
-  const stop = useCallback(async () => {
-    try {
-      await CapacitorPedometer.stopMeasurementUpdates();
-      if (listenerRef.current) {
-        await listenerRef.current.remove();
-        listenerRef.current = null;
-      }
-    } catch {
-    } finally {
-      runningRef.current = false;
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      setData((d) => ({ ...d, sensorStatus: 'idle' }));
-    }
-  }, []);
-
-  const resetSession = useCallback(() => {
-    baseRef.current = null;
-    historyRef.current = [];
-    spmRef.current = 0;
-    startTimeRef.current = 0;
-    setData((d) => ({
-      ...d,
-      sessionSteps: 0,
-      stepsPerMinute: 0,
-      elapsedSeconds: 0,
-      error: null,
-    }));
-  }, []);
-
-  return { data, start, stop, resetSession };
 }
 
 ===== C:\runcadence\src\main.tsx =====

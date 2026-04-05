@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.runcadence.app',
-  appName: 'RunCadence',
+  appId: 'com.paceup.app',
+  appName: 'PaceUp',
   webDir: 'dist',
 };
 
