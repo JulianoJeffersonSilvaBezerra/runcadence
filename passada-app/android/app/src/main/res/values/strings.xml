@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">passada</string>
-    <string name="title_activity_main">passada</string>
-    <string name="package_name">com.passada.app</string>
-    <string name="custom_url_scheme">com.passada.app</string>
-</resources>

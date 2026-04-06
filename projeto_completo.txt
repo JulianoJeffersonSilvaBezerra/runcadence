@@ -70,7 +70,7 @@ export default defineConfig({
   </body>
 </html>
 
-===== C:\runcadence\src\App.css =====
+===== C:\PaceUp\src\App.css =====
 :root {
   --bg: #08090f;
   --surface: #0f1119;
@@ -162,9 +162,7 @@ input {
   position: fixed;
   inset: 0;
   z-index: 60;
-  display: grid;
-  place-items: center;
-  padding: 20px;
+  overflow: hidden;
   background:
     radial-gradient(circle at 20% 10%, rgba(0, 230, 118, 0.15), transparent 35%),
     radial-gradient(circle at 85% 20%, rgba(79, 195, 247, 0.14), transparent 30%),
@@ -173,10 +171,13 @@ input {
 }
 
 .intro-frame {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
   border: 0;
   background: #000;
+  display: block;
 }
 
 .intro-overlay-shade {
@@ -184,26 +185,6 @@ input {
   inset: 0;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.25));
   pointer-events: none;
-}
-
-.intro-overlay-controls {
-  position: absolute;
-  left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  z-index: 2;
-  padding: 10px 12px;
-  border-radius: 16px;
-  background: rgba(5, 7, 12, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-}
-
-.intro-overlay-leave {
-  animation: introOverlayOut 320ms ease forwards;
 }
 
 .intro-card {
@@ -257,29 +238,6 @@ input {
   animation: introProgress 2.6s linear forwards;
 }
 
-.intro-enter-btn {
-  margin-top: 16px;
-  min-height: 48px;
-  padding: 10px 18px;
-  border-radius: 14px;
-  background: var(--green);
-  color: #08100c;
-  font-weight: 900;
-}
-
-.intro-pref {
-  margin-top: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--muted-2);
-  font-weight: 700;
-}
-
-.intro-pref input {
-  accent-color: var(--green);
-}
 
 @keyframes introCardIn {
   from {
@@ -301,21 +259,13 @@ input {
   }
 }
 
-@keyframes introOverlayOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
 
 .app-screen {
   position: relative;
   z-index: 1;
   width: min(100%, 760px);
   margin: 0 auto;
-  padding: 20px 16px 140px;
+  padding: 20px 16px 110px;
 }
 
 .topbar {
@@ -324,6 +274,14 @@ input {
   align-items: center;
   gap: 12px;
   margin-bottom: 18px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .view-switch {
@@ -355,8 +313,35 @@ input {
   color: var(--muted);
   font-size: 11px;
   font-weight: 700;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   text-align: center;
+}
+
+.pace-zone-gauge {
+  margin-top: 12px;
+}
+
+.pace-zone-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: #1d2232;
+  overflow: hidden;
+}
+
+.pace-zone-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #00e676, #6effb3);
+}
+
+.pace-zone-labels {
+  margin-top: 5px;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 10px;
+  color: #4b5270;
 }
 
 .tiro-card {
@@ -425,6 +410,120 @@ input {
   margin-bottom: 14px;
 }
 
+.tiro-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.tiro-topline-title {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ff4444;
+  font-weight: 800;
+}
+
+.tiro-topline-repeat {
+  font-size: 12px;
+  color: var(--muted-2);
+  font-weight: 700;
+}
+
+.tiro-blocks-mini {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.tiro-block-mini {
+  flex: 1;
+  height: 5px;
+  border-radius: 99px;
+  opacity: 0.35;
+  background: #1f2230;
+}
+
+.tiro-block-mini-done {
+  opacity: 1;
+}
+
+.tiro-block-mini-run {
+  background: #ff2a00;
+}
+
+.tiro-block-mini-rest {
+  background: #ffaa00;
+}
+
+.tiro-block-mini-cooldown {
+  background: #6b728e;
+}
+
+.tiro-block-mini-warmup {
+  background: #00e676;
+}
+
+.tiro-hud-watch-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.tiro-hud-watch {
+  width: min(82vw, 280px);
+  height: min(82vw, 280px);
+  border-radius: 50%;
+  background: #050508;
+  border: 2px solid #1f2230;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.tiro-hud-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.tiro-hud-watch-center {
+  z-index: 2;
+  text-align: center;
+  padding: 10px;
+}
+
+.tiro-hud-watch-center .tiro-hud-label {
+  font-size: 9px;
+  color: #ff7d66;
+}
+
+.tiro-hud-watch-center .tiro-hud-timer {
+  margin-top: 4px;
+  font-size: clamp(28px, 8vw, 40px);
+  color: #fff;
+  text-shadow: none;
+}
+
+.tiro-hud-watch-center .tiro-hud-pace {
+  margin-top: 4px;
+  color: #00e676;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.tiro-hud-zone {
+  margin-top: 2px;
+  color: #ffaa00;
+  font-size: 10px;
+  font-weight: 700;
+}
+
 .tiro-hud-timer {
   margin-top: 8px;
   font-size: clamp(56px, 15vw, 88px);
@@ -452,6 +551,37 @@ input {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 14px;
+}
+
+.tiro-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tiro-info-box {
+  border-radius: 12px;
+  background: #0d1018;
+  border: 1px solid #1c2030;
+  padding: 8px;
+  text-align: center;
+}
+
+.tiro-info-val {
+  font-size: 14px;
+  line-height: 1;
+  color: #f0f2ff;
+  font-weight: 800;
+}
+
+.tiro-info-lbl {
+  margin-top: 4px;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4b5270;
+  font-weight: 700;
 }
 
 .tiro-btn {
@@ -775,6 +905,34 @@ input {
   gap: 10px;
 }
 
+.treino-control-row {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.treino-main-btn {
+  flex: 1;
+  min-height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #1cf38b 0%, #00e676 100%);
+  color: #07120b;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.treino-side-btn {
+  width: 42px;
+  min-width: 42px;
+  min-height: 42px;
+  border-radius: 10px;
+  background: #111520;
+  color: #9aa0bb;
+  border: 1px solid #1c2030;
+  font-size: 14px;
+}
+
 .metric-card-ui {
   background: var(--card);
   border: 1px solid var(--border);
@@ -910,6 +1068,170 @@ input {
   align-items: center;
   gap: 14px;
   margin-bottom: 16px;
+}
+
+.music-art-hero {
+  height: 120px;
+  border-radius: 16px;
+  margin-bottom: 12px;
+  background: linear-gradient(140deg, #12002a 0%, #002040 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.music-art-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+}
+
+.music-art-chip {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: rgba(0, 230, 118, 0.15);
+  border: 1px solid rgba(0, 230, 118, 0.3);
+  color: var(--green);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.data-hero-card {
+  background: linear-gradient(180deg, #111824 0%, #0b0f17 100%);
+}
+
+.data-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.data-hero-stat {
+  text-align: center;
+  padding: 10px 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+}
+
+.data-hero-value {
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.data-hero-value span {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.data-hero-label {
+  margin-top: 4px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4b5270;
+}
+
+.data-chart-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #4b5270;
+  margin-bottom: 6px;
+}
+
+.data-bars {
+  height: 70px;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.data-splits {
+  display: grid;
+  gap: 5px;
+}
+
+.data-split-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.data-split-idx {
+  width: 12px;
+  font-size: 9px;
+  color: #4b5270;
+  font-weight: 700;
+}
+
+.data-split-track {
+  flex: 1;
+  height: 4px;
+  background: #1c2030;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.data-split-fill {
+  height: 100%;
+  border-radius: inherit;
+}
+
+.data-split-fast {
+  background: #00e676;
+}
+
+.data-split-slow {
+  background: #ff8c66;
+}
+
+.data-split-pace {
+  width: 42px;
+  text-align: right;
+  font-size: 10px;
+  color: #f0f2ff;
+  font-weight: 700;
+}
+
+.data-minimap {
+  margin-top: 10px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #1c2030;
+  background: #0d1018;
+}
+
+.data-minimap svg {
+  width: 100%;
+  height: 70px;
+  display: block;
+}
+
+.data-bar {
+  flex: 1;
+  border-radius: 4px 4px 2px 2px;
+}
+
+.data-bar-fast {
+  background: #00e676;
+}
+
+.data-bar-slow {
+  background: #ff8c66;
 }
 
 .track-art {
@@ -1349,13 +1671,44 @@ input {
 .bottom-actions {
   position: fixed;
   left: 50%;
-  bottom: 18px;
+  bottom: 84px;
   transform: translateX(-50%);
   width: min(calc(100% - 24px), 760px);
   display: flex;
   gap: 10px;
   z-index: 20;
   padding: 0 4px;
+}
+
+.view-switch-bottom {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  width: min(calc(100% - 24px), 760px);
+  background: rgba(8, 10, 16, 0.92);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 6px;
+  margin: 0;
+  z-index: 21;
+  backdrop-filter: blur(10px);
+}
+
+.view-switch-bottom .view-btn {
+  min-height: 48px;
+  border-radius: 10px;
+  font-size: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.view-switch-bottom .view-btn span {
+  font-size: 14px;
+  line-height: 1;
 }
 
 .run-btn-main {
@@ -1388,12 +1741,17 @@ input {
 
 @media (max-width: 720px) {
   .app-screen {
-    padding: 18px 14px 130px;
+    padding: 18px 14px 104px;
   }
 
   .topbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .topbar-right {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .hero-top {
@@ -1425,19 +1783,20 @@ input {
     padding: 22px 18px;
   }
 
-  .intro-overlay-controls {
-    width: calc(100% - 24px);
-    justify-content: space-between;
-    padding: 10px;
-    flex-wrap: wrap;
-  }
-
   .metrics-grid {
     grid-template-columns: 1fr;
   }
 
   .tiro-summary-grid,
   .tiro-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .tiro-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .data-hero-stats {
     grid-template-columns: 1fr;
   }
 
@@ -1496,16 +1855,6 @@ input {
     border-radius: 18px;
   }
 
-  .bottom-actions {
-    width: min(calc(100% - 16px), 760px);
-    bottom: 12px;
-  }
-
-  .run-btn-main,
-  .reset-btn-main {
-    min-height: 54px;
-    border-radius: 16px;
-  }
 }
 
 @media (max-width: 380px) {
@@ -1645,7 +1994,7 @@ input {
   gap: 10px;
 }
 
-===== C:\runcadence\src\App.tsx =====
+===== C:\PaceUp\src\App.tsx =====
 // src/App.tsx â€” SUBSTITUI O ARQUIVO ANTERIOR INTEIRO
 // MudanÃ§as: nome PaceUp, mapa integrado, editor de BPM, useRunningPlugin removido
 
@@ -1664,8 +2013,6 @@ import type { MusicMode } from './hooks/useMusicEngine';
 import './App.css';
 
 export default function App() {
-  const INTRO_PREF_KEY = 'paceup:introDisabled:v3';
-  const introDisabledInitial = window.localStorage.getItem(INTRO_PREF_KEY) === '1';
   const buildLabel = __APP_BUILD__.slice(0, 19).replace('T', ' ');
   const gps   = useGPS();
   const cal   = useCalibration();
@@ -1673,11 +2020,8 @@ export default function App() {
   const history = useWorkoutHistory();
   const coach = useSpeechCoach();
   const tiro = useTiroWorkout();
-  const [showIntro, setShowIntro] = useState(!introDisabledInitial);
-  const [introLeaving, setIntroLeaving] = useState(false);
-  const [disableIntro, setDisableIntro] = useState(introDisabledInitial);
+  const [showIntro, setShowIntro] = useState(true);
   const [backendStatus, setBackendStatus] = useState<'desativado' | 'ok' | 'falha'>('desativado');
-  const introCloseRef = useRef<number | null>(null);
   const introAutoRef = useRef<number | null>(null);
 
   const rawStride     = cal.data.strideM * (1 + (gps.data.speedMs - 3) * 0.05);
@@ -1692,39 +2036,13 @@ export default function App() {
   const [targetPaceInput, setTargetPaceInput] = useState('5.30');
   const importHistoryInputRef = useRef<HTMLInputElement>(null);
 
-  function closeIntro() {
-    if (!showIntro || introLeaving) return;
-    setIntroLeaving(true);
-    if (introAutoRef.current !== null) {
-      window.clearTimeout(introAutoRef.current);
-      introAutoRef.current = null;
-    }
-    introCloseRef.current = window.setTimeout(() => {
-      setShowIntro(false);
-      setIntroLeaving(false);
-    }, 320);
-  }
-
-  function handleIntroPreference(checked: boolean) {
-    setDisableIntro(checked);
-    window.localStorage.setItem(INTRO_PREF_KEY, checked ? '1' : '0');
-  }
-
   useEffect(() => {
-    if (introDisabledInitial) return;
-
-    setShowIntro(true);
     introAutoRef.current = window.setTimeout(() => {
-      setIntroLeaving(true);
-      introCloseRef.current = window.setTimeout(() => {
-        setShowIntro(false);
-        setIntroLeaving(false);
-      }, 320);
-    }, 6200);
+      setShowIntro(false);
+    }, 500);
 
     return () => {
       if (introAutoRef.current !== null) window.clearTimeout(introAutoRef.current);
-      if (introCloseRef.current !== null) window.clearTimeout(introCloseRef.current);
     };
   }, []);
 
@@ -1934,6 +2252,44 @@ export default function App() {
     if (Math.abs(paceDiff) <= 0.15) return 'Dentro da meta';
     return paceDiff < 0 ? 'Abaixo da meta' : 'Acima da meta';
   }, [paceDiff]);
+
+  const paceZoneFill = useMemo(() => {
+    if (!targetPaceNumber || !heroPace) return 50;
+    const fastEdge = Math.max(3, targetPaceNumber - 0.3);
+    const slowEdge = Math.min(15, targetPaceNumber + 0.3);
+    const pct = ((slowEdge - heroPace) / (slowEdge - fastEdge)) * 100;
+    return Math.max(0, Math.min(100, pct));
+  }, [heroPace, targetPaceNumber]);
+
+  const recentPaceBars = useMemo(() => {
+    const source = history.sessions.slice(0, 6).map((s) => s.averagePace).filter((p) => p > 0);
+    if (source.length === 0) return [];
+
+    const min = Math.min(...source);
+    const max = Math.max(...source);
+    return source.map((pace) => {
+      const normalized = max === min ? 0.7 : (max - pace) / (max - min);
+      return {
+        pace,
+        height: 26 + normalized * 36,
+        fast: pace <= targetPaceNumber || pace <= 5.3,
+      };
+    });
+  }, [history.sessions, targetPaceNumber]);
+
+  const splitRows = useMemo(() => {
+    const source = recentPaceBars.length > 0
+      ? recentPaceBars
+      : [{ pace: gps.data.averagePace || 0, height: 48, fast: true }];
+
+    const maxHeight = Math.max(...source.map((s) => s.height), 1);
+    return source.slice(0, 6).map((item, idx) => ({
+      idx: idx + 1,
+      pace: item.pace,
+      width: Math.max(32, Math.round((item.height / maxHeight) * 100)),
+      fast: item.fast,
+    }));
+  }, [recentPaceBars, gps.data.averagePace]);
 
   const targetSource = music.data.mode === 'target_pace'
     ? 'Fonte: pace escolhido'
@@ -2180,22 +2536,9 @@ export default function App() {
       <div className="app-bg-glow app-bg-glow-2" />
 
       {showIntro && (
-        <section className={`intro-overlay ${introLeaving ? 'intro-overlay-leave' : ''}`} aria-label="Abertura do aplicativo PaceUp">
+        <section className="intro-overlay" aria-label="Abertura do aplicativo PaceUp">
           <iframe className="intro-frame" src="/logo_intro.html" title="PaceUp intro" />
           <div className="intro-overlay-shade" />
-          <div className="intro-overlay-controls">
-            <label className="intro-pref">
-              <input
-                type="checkbox"
-                checked={disableIntro}
-                onChange={(e) => handleIntroPreference(e.target.checked)}
-              />
-              <span>Nao mostrar novamente</span>
-            </label>
-            <button className="intro-enter-btn" onClick={closeIntro}>
-              Entrar agora
-            </button>
-          </div>
         </section>
       )}
 
@@ -2211,13 +2554,11 @@ export default function App() {
               <p className="build-info">build {buildLabel}</p>
             </div>
           </div>
-          <div className={`gps-pill ${gpsActive ? 'gps-on' : 'gps-off'}`}>
-            <span className="gps-dot" />
-            {gpsActive ? 'GPS ativo' : gpsPaused ? 'GPS pausado' : 'GPS pronto'}
-          </div>
-          <div className={`gps-pill ${backendStatus === 'ok' ? 'gps-on' : 'gps-off'}`}>
-            <span className="gps-dot" />
-            {backendStatus === 'ok' ? 'Nuvem OK' : backendStatus === 'falha' ? 'Nuvem falha' : 'Nuvem off'}
+          <div className="topbar-right">
+            <div className={`gps-pill ${gpsActive ? 'gps-on' : 'gps-off'}`}>
+              <span className="gps-dot" />
+              {gpsActive ? 'GPS ativo' : gpsPaused ? 'GPS pausado' : 'GPS pronto'}
+            </div>
           </div>
         </header>
 
@@ -2228,21 +2569,6 @@ export default function App() {
             â¸ Sessao pausada restaurada. Toque em Retomar corrida para continuar sem perder progresso.
           </div>
         )}
-
-        <section className="view-switch" aria-label="Navegacao lateral">
-          <button className={`view-btn ${activePage === 0 ? 'view-btn-active' : ''}`} onClick={() => goToPage(0)}>
-            Treino
-          </button>
-          <button className={`view-btn ${activePage === 1 ? 'view-btn-active' : ''}`} onClick={() => goToPage(1)}>
-            Musica
-          </button>
-          <button className={`view-btn ${activePage === 2 ? 'view-btn-active' : ''}`} onClick={() => goToPage(2)}>
-            Tiro
-          </button>
-          <button className={`view-btn ${activePage === 3 ? 'view-btn-active' : ''}`} onClick={() => goToPage(3)}>
-            Dados
-          </button>
-        </section>
 
         <div className="swipe-hint">Deslize para esquerda ou direita para trocar de tela</div>
 
@@ -2304,6 +2630,17 @@ export default function App() {
             <div className="hero-diff-badge">{goalStatus}</div>
             <div className="hero-diff-badge">{targetSource}</div>
           </div>
+
+          <div className="pace-zone-gauge">
+            <div className="pace-zone-track">
+              <div className="pace-zone-fill" style={{ width: `${paceZoneFill}%` }} />
+            </div>
+            <div className="pace-zone-labels">
+              <span>lento {targetPaceNumber > 0 ? formatPace(targetPaceNumber + 0.3) : '--:--'}</span>
+              <span>zona alvo</span>
+              <span>{targetPaceNumber > 0 ? formatPace(Math.max(3, targetPaceNumber - 0.3)) : '--:--'} rapido</span>
+            </div>
+          </div>
         </section>
 
         {/* â”€â”€ Metrics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
@@ -2313,33 +2650,6 @@ export default function App() {
           <MetricCard color="orange" label="Tempo"     value={formatElapsed(cadence.data.elapsedSeconds)} />
         </section>
 
-        {/* â”€â”€ Pace comparison â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        <section className="pace-bars-card">
-          <div className="section-head">
-            <h2>Pace e comparacao</h2>
-            <span className="mini-badge">
-              {gps.data.averagePace > 0 ? 'ao vivo' : 'aguardando'}
-            </span>
-          </div>
-          <div className="comparison-grid">
-            <InfoLine label="Pace instantaneo"   value={formatPace(gps.data.instantPace)} />
-            <InfoLine label="Pace medio GPS"    value={formatPace(gps.data.averagePace)} />
-            <InfoLine label="Pace por formula"  value={formatPace(paceBySPM)} />
-            <InfoLine
-              label="Pace-alvo"
-              value={music.data.targetPace > 0
-                ? formatPace(music.data.targetPace)
-                : formatPace(targetPaceNumber)}
-            />
-            <InfoLine
-              label="Erro GPS x formula"
-              value={paceError > 0 ? `${paceError.toFixed(2)} min/km` : '--'}
-              sub={paceError > 0 ? paceErrorLabel : undefined}
-            />
-            <InfoLine label="Status da meta" value={goalStatus} />
-          </div>
-        </section>
-
         {/* â”€â”€ MAPA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <GPSMap
           routePoints={mapRoute}
@@ -2347,6 +2657,21 @@ export default function App() {
           currentLng={gps.data.lng || fallbackLast?.lng || 0}
           isActive={gpsActive}
         />
+
+        <section className="treino-control-row">
+          {!gpsActive && !gpsPaused ? (
+            <button className="treino-main-btn" onClick={handleStart}>â–¶ Iniciar corrida</button>
+          ) : gpsActive ? (
+            <button className="treino-main-btn" onClick={handlePause}>â¸ Pausar corrida</button>
+          ) : (
+            <button className="treino-main-btn" onClick={handleStart}>â–¶ Retomar corrida</button>
+          )}
+          {gpsActive || gpsPaused ? (
+            <button className="treino-side-btn" onClick={handleStop}>â– </button>
+          ) : (
+            <button className="treino-side-btn" onClick={handleReset}>â†º</button>
+          )}
+        </section>
           </>
         )}
 
@@ -2358,31 +2683,67 @@ export default function App() {
             <span className="mini-badge">garmin style</span>
           </div>
 
-          <div className="tiro-summary-grid">
-            <div className="tiro-summary">
-              <div className="tiro-summary-label">Estrutura</div>
-              <div className="tiro-summary-value">{tiro.currentRepeatLabel || tiro.activeBlock?.name || '---'}</div>
-              <div className="tiro-summary-sub">{tiro.activeBlock?.stepType === 'run' ? `Zona ${tiro.paceZoneLabel || '--'}` : 'Etapa guiada do treino'}</div>
-            </div>
-            <div className="tiro-summary tiro-summary-red">
-              <div className="tiro-summary-label">Status</div>
-              <div className="tiro-summary-value">{tiro.running ? 'Em andamento' : tiro.paused ? 'Pausado' : 'Pronto'}</div>
-              <div className="tiro-summary-sub">{tiro.waitingOpen ? 'Bloco aberto aguardando PrÃ³ximo' : 'ExecuÃ§Ã£o automÃ¡tica ativa'}</div>
+          <div className="tiro-topline">
+            <div className="tiro-topline-title">{tiro.activeBlock?.stepType === 'run' ? 'TIRO' : tiro.activeBlock?.name || 'TREINO'}</div>
+            <div className="tiro-topline-repeat">{tiro.currentRepeatLabel || 'sequencia'}</div>
+          </div>
+
+          <div className="tiro-blocks-mini">
+            {tiro.executionBlocks.map((block, index) => (
+              <div
+                key={`${block.id}-${index}`}
+                className={`tiro-block-mini ${index <= tiro.currentIndex ? 'tiro-block-mini-done' : ''} ${block.stepType === 'run' ? 'tiro-block-mini-run' : block.stepType === 'rest' ? 'tiro-block-mini-rest' : block.stepType === 'cooldown' ? 'tiro-block-mini-cooldown' : 'tiro-block-mini-warmup'}`}
+              />
+            ))}
+          </div>
+
+          <div className="tiro-hud-watch-wrap">
+            <div className="tiro-hud-watch">
+              <svg className="tiro-hud-svg" viewBox="0 0 220 220" fill="none">
+                <circle cx="110" cy="110" r="98" stroke="#222432" strokeWidth="8" />
+                <circle cx="110" cy="110" r="98" stroke="#ff2a00" strokeWidth="8" strokeDasharray="616" strokeDashoffset="220" strokeLinecap="round" transform="rotate(-90 110 110)" opacity="0.85" />
+                <circle cx="110" cy="110" r="82" stroke="#222432" strokeWidth="5" />
+                <circle cx="110" cy="110" r="82" stroke="#00e676" strokeWidth="5" strokeDasharray="515" strokeDashoffset="210" strokeLinecap="round" transform="rotate(-90 110 110)" opacity="0.65" />
+              </svg>
+
+              <div className="tiro-hud-watch-center">
+                <div className="tiro-hud-label">{tiro.activeBlock?.durationType === 'distancia' ? 'Distancia restante' : 'Tempo restante'}</div>
+                <div className="tiro-hud-timer">{tiro.activeBlockRemainingText}</div>
+                <div className="tiro-hud-pace">{formatPace(gps.data.instantPace || gps.data.averagePace)}</div>
+                <div className="tiro-hud-zone">{tiro.activeBlock?.stepType === 'run' ? `${tiro.paceZoneLabel || 'sem zona'} Â· ${tiro.paceInZone ? 'dentro' : 'fora'}` : 'bloco de suporte'}</div>
+              </div>
             </div>
           </div>
 
-          <div className="tiro-hud">
-            <div className="tiro-hud-label">{tiro.activeBlock?.durationType === 'distancia' ? 'Distancia restante' : 'Tempo restante'}</div>
-            <div className="tiro-hud-timer">{tiro.activeBlockRemainingText}</div>
-            <div className="tiro-hud-status">
-              {tiro.running ? 'SEQUENCIA EM ANDAMENTO' : tiro.paused ? 'PAUSADO' : 'STANDBY'}
+          <div className="tiro-summary-grid">
+            <div className="tiro-summary">
+              <div className="tiro-summary-label">Bloco atual</div>
+              <div className="tiro-summary-value">{tiro.activeBlock?.name || '--'}</div>
+              <div className="tiro-summary-sub">{tiro.waitingOpen ? 'Bloco open: avance manualmente' : 'Execucao automatica ativa'}</div>
             </div>
-            <div className="tiro-hud-pace">
-              {tiro.activeBlock?.stepType === 'run'
-                ? `${tiro.paceZoneLabel || 'Sem zona definida'} â€¢ ${tiro.paceInZone ? 'dentro da zona' : 'fora da zona'}`
-                : tiro.activeBlock?.durationType === 'open'
-                ? 'Bloco aberto. Use PrÃ³ximo quando estiver pronto.'
-                : 'Bloco cronometrado por tempo'}
+            <div className="tiro-summary tiro-summary-red">
+              <div className="tiro-summary-label">Pace-alvo</div>
+              <div className="tiro-summary-value">{tiro.paceZoneLabel || '--'}</div>
+              <div className="tiro-summary-sub">{tiro.running ? 'treino em andamento' : tiro.paused ? 'treino pausado' : 'standby'}</div>
+            </div>
+          </div>
+
+          <div className="tiro-info-grid">
+            <div className="tiro-info-box">
+              <div className="tiro-info-val">{tiro.activeBlock?.durationType === 'distancia' ? `${tiro.activeBlock.durationValue}m` : tiro.activeBlockRemainingText}</div>
+              <div className="tiro-info-lbl">bloco</div>
+            </div>
+            <div className="tiro-info-box">
+              <div className="tiro-info-val">{tiro.currentRepeatLabel ? tiro.currentRepeatLabel.replace('Tiro ', '') : '--'}</div>
+              <div className="tiro-info-lbl">repeticao</div>
+            </div>
+            <div className="tiro-info-box">
+              <div className="tiro-info-val">{tiro.paceZoneLabel || '--'}</div>
+              <div className="tiro-info-lbl">pace alvo</div>
+            </div>
+            <div className="tiro-info-box">
+              <div className="tiro-info-val">{(gps.data.smoothedDistance / 1000).toFixed(2)} km</div>
+              <div className="tiro-info-lbl">total hoje</div>
             </div>
           </div>
 
@@ -2485,56 +2846,62 @@ export default function App() {
 
         {activePage === 3 && (
           <>
-        {/* â”€â”€ Detalhes tecnicos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        <section className="details-card">
+        <section className="details-card data-hero-card">
           <div className="section-head">
-            <h2>Detalhes tecnicos</h2>
-            <span className="mini-badge">debug leve</span>
-          </div>
-          <div className="details-grid">
-            <InfoLine label="Precisao GPS"      value={`${gps.data.accuracy} m`} />
-            <InfoLine label="Velocidade"         value={`${gps.data.speedMs} m/s`} />
-            <InfoLine label="Distancia bruta"    value={`${(gps.data.rawDistance / 1000).toFixed(2)} km`} />
-            <InfoLine
-              label="Qualidade de pontos"
-              value={`${gps.data.acceptedPoints} ok / ${gps.data.rejectedPoints} rejeitados`}
-            />
-            <InfoLine
-              label="Gap bruta x filtrada"
-              value={`${distanceGapM.toFixed(0)} m`}
-              sub={gps.data.rawDistance > 0 ? `${distanceGapPct.toFixed(1)}% da bruta` : undefined}
-            />
-            <InfoLine label="Passos estimados"   value={String(cadence.data.sessionSteps)} />
-            <InfoLine label="Buffer carregado"   value={music.data.hasAudioBuffer ? 'Sim' : 'Nao'} />
-            <InfoLine label="Status calibracao"  value={cal.data.status} />
-            <InfoLine label="Passada calibrada"  value={`${cal.data.strideM.toFixed(4)} m`} />
+            <h2>Resumo pos-treino</h2>
+            <span className="mini-badge">strava style</span>
           </div>
 
-          <div className="signal-health-grid">
-            <InfoLine label="Confianca GPS" value={`${gpsConfidence}%`} sub={gpsConfidence >= 70 ? 'boa' : gpsConfidence >= 45 ? 'media' : 'baixa'} />
-            <InfoLine label="Confianca Cadencia" value={`${cadenceConfidence}%`} sub={cadenceConfidence >= 70 ? 'boa' : cadenceConfidence >= 45 ? 'media' : 'baixa'} />
-            <InfoLine label="Confianca BPM" value={`${bpmConfidence}%`} sub={`fonte ${music.data.bpmSource}`} />
-            <InfoLine label="Confianca Controle" value={`${controlConfidence}%`} sub={controlConfidence >= 70 ? 'ajuste estavel' : 'ajuste em calibracao'} />
+          <div className="data-hero-stats">
+            <div className="data-hero-stat">
+              <div className="data-hero-value">{(gps.data.smoothedDistance / 1000).toFixed(2)}<span> km</span></div>
+              <div className="data-hero-label">Distancia</div>
+            </div>
+            <div className="data-hero-stat">
+              <div className="data-hero-value">{formatElapsed(gps.data.elapsedSeconds)}</div>
+              <div className="data-hero-label">Tempo</div>
+            </div>
+            <div className="data-hero-stat">
+              <div className="data-hero-value">{formatPace(gps.data.averagePace)}</div>
+              <div className="data-hero-label">Pace medio</div>
+            </div>
           </div>
 
-          <div className="calibration-actions">
-            {!calRunning ? (
-              <button
-                className="secondary-btn"
-                onClick={() => cal.startCalibration(cadence.data.sessionSteps, gps.data.smoothedDistance)}
-                disabled={!gpsActive}
-              >
-                Iniciar calibracao
-              </button>
-            ) : (
-              <button
-                className="secondary-btn secondary-btn-green"
-                onClick={() => cal.finishCalibration(cadence.data.sessionSteps, gps.data.smoothedDistance)}
-              >
-                Finalizar calibracao
-              </button>
-            )}
-            <button className="secondary-btn" onClick={cal.reset}>Reset calibracao</button>
+          {recentPaceBars.length > 0 && (
+            <>
+              <div className="data-chart-label">Pace por treino recente</div>
+              <div className="data-bars">
+                {recentPaceBars.map((bar, idx) => (
+                  <div
+                    key={`${bar.pace}-${idx}`}
+                    className={`data-bar ${bar.fast ? 'data-bar-fast' : 'data-bar-slow'}`}
+                    style={{ height: `${bar.height}px` }}
+                    title={formatPace(bar.pace)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+          <div className="data-chart-label" style={{ marginTop: 12 }}>Splits</div>
+          <div className="data-splits">
+            {splitRows.map((row) => (
+              <div key={row.idx} className="data-split-row">
+                <div className="data-split-idx">{row.idx}</div>
+                <div className="data-split-track">
+                  <div className={`data-split-fill ${row.fast ? 'data-split-fast' : 'data-split-slow'}`} style={{ width: `${row.width}%` }} />
+                </div>
+                <div className="data-split-pace">{row.pace > 0 ? formatPace(row.pace) : '--:--'}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="data-minimap">
+            <svg viewBox="0 0 180 70" fill="none">
+              <path d="M12 52 Q34 28 58 39 Q88 52 114 26 Q138 8 160 24" stroke="#00e676" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+              <circle cx="12" cy="52" r="3.2" fill="#1d9e75" stroke="#fff" strokeWidth="1" />
+              <circle cx="160" cy="24" r="3.2" fill="#ff5252" stroke="#fff" strokeWidth="1" />
+            </svg>
           </div>
         </section>
 
@@ -2598,6 +2965,11 @@ export default function App() {
             <span className="mini-badge">
               {musicPlaying ? 'tocando' : music.data.hasAudioBuffer ? (music.data.rateControlMode === 'manual' ? 'manual' : 'sugestao') : 'sem musica'}
             </span>
+          </div>
+
+          <div className="music-art-hero">
+            <div className="music-art-chip">{music.data.bpm || '--'} BPM</div>
+            <div className="music-art-icon">ðŸŽ§</div>
           </div>
 
           <div className="player-track">
@@ -2756,67 +3128,28 @@ export default function App() {
           </div>
         </section>
 
-        {/* â”€â”€ Controle de pace â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        <section className="control-card">
-          <div className="section-head">
-            <h2>Controle de pace</h2>
-            <span className="mini-badge">
-              {music.data.mode === 'target_pace' ? 'auto ativo' : 'manual'}
-            </span>
-          </div>
-          <div className="pace-control-box">
-            <button
-              className="step-btn"
-              disabled={music.data.mode !== 'target_pace'}
-              onClick={() =>
-                setTargetPaceInput((prev) =>
-                  Math.max(3, parseFloat(prev || '5.30') - 0.05).toFixed(2)
-                )
-              }
-            >
-              âˆ’
-            </button>
-            <div className="pace-display-box">
-              <div className="pace-display-value">{targetPaceNumber.toFixed(2)}</div>
-              <div className="pace-display-unit">min/km</div>
-            </div>
-            <button
-              className="step-btn"
-              disabled={music.data.mode !== 'target_pace'}
-              onClick={() =>
-                setTargetPaceInput((prev) =>
-                  Math.min(15, parseFloat(prev || '5.30') + 0.05).toFixed(2)
-                )
-              }
-            >
-              +
-            </button>
-          </div>
-          {music.data.mode !== 'target_pace' && (
-            <div className="time-row" style={{ marginTop: 8 }}>
-              <span>Ajuste de pace bloqueado no modo seguir musica</span>
-              <span>Troque para Pace-alvo</span>
-            </div>
-          )}
-        </section>
           </>
         )}
 
         {/* â”€â”€ Botoes fixos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        <footer className="bottom-actions">
-          {!gpsActive && !gpsPaused ? (
-            <button className="run-btn-main" onClick={handleStart}>â–¶ Iniciar corrida</button>
-          ) : gpsActive ? (
-            <button className="run-btn-main" onClick={handlePause}>â¸ Pausar corrida</button>
-          ) : (
-            <button className="run-btn-main" onClick={handleStart}>â–¶ Retomar corrida</button>
-          )}
-          {gpsActive || gpsPaused ? (
-            <button className="reset-btn-main" onClick={handleStop}>â– </button>
-          ) : (
-            <button className="reset-btn-main" onClick={handleReset}>â†º</button>
-          )}
-        </footer>
+        <section className="view-switch view-switch-bottom" aria-label="Navegacao lateral">
+          <button className={`view-btn ${activePage === 0 ? 'view-btn-active' : ''}`} onClick={() => goToPage(0)}>
+            <span>âš¡</span>
+            Treino
+          </button>
+          <button className={`view-btn ${activePage === 1 ? 'view-btn-active' : ''}`} onClick={() => goToPage(1)}>
+            <span>ðŸŽµ</span>
+            Musica
+          </button>
+          <button className={`view-btn ${activePage === 2 ? 'view-btn-active' : ''}`} onClick={() => goToPage(2)}>
+            <span>â—Ž</span>
+            Tiro
+          </button>
+          <button className={`view-btn ${activePage === 3 ? 'view-btn-active' : ''}`} onClick={() => goToPage(3)}>
+            <span>ðŸ“Š</span>
+            Dados
+          </button>
+        </section>
 
       </main>
     </div>
@@ -2859,7 +3192,7 @@ function formatElapsed(s: number): string {
   return `${m}:${String(sec).padStart(2, '0')}`;
 }
 
-===== C:\runcadence\src\components\GPSMap.tsx =====
+===== C:\PaceUp\src\components\GPSMap.tsx =====
 import { RouteMap } from './RouteMap';
 import type { RoutePoint } from '../hooks/useGPS';
 
@@ -2894,7 +3227,7 @@ export function GPSMap({ routePoints, currentLat, currentLng, isActive }: GPSMap
   );
 }
 
-===== C:\runcadence\src\components\RouteMap.tsx =====
+===== C:\PaceUp\src\components\RouteMap.tsx =====
 // src/components/RouteMap.tsx
 // Crie a pasta src/components/ se ela nÃ£o existir.
 // Import CORRETO: vem de '../hooks/useGPS' (nÃ£o de useRunningPlugin)
@@ -3019,7 +3352,7 @@ export function RouteMap({ routePoints, currentLat, currentLng, isActive }: Rout
   );
 }
 
-===== C:\runcadence\src\hooks\useCadence.ts =====
+===== C:\PaceUp\src\hooks\useCadence.ts =====
 import { useState, useRef, useEffect } from 'react';
 
 // â”€â”€â”€ useCadence â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -3127,7 +3460,7 @@ export function useCadence(
   return { data, reset };
 }
 
-===== C:\runcadence\src\hooks\useCalibration.ts =====
+===== C:\PaceUp\src\hooks\useCalibration.ts =====
 import { useState, useRef } from 'react';
 
 // BUG ORIGINAL: calibraÃ§Ã£o sem nenhuma validaÃ§Ã£o.
@@ -3218,7 +3551,7 @@ export function useCalibration() {
   return { data, startCalibration, finishCalibration, reset };
 }
 
-===== C:\runcadence\src\hooks\useGPS.ts =====
+===== C:\PaceUp\src\hooks\useGPS.ts =====
 // src/hooks/useGPS.ts  â€” SUBSTITUI O ARQUIVO ANTERIOR INTEIRO
 // APAGUE tambÃ©m src/hooks/useRunningPlugin.ts â€” este arquivo jÃ¡ faz tudo.
 
@@ -3676,7 +4009,7 @@ function haversineM(lat1: number, lng1: number, lat2: number, lng2: number): num
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-===== C:\runcadence\src\hooks\useMusicEngine.ts =====
+===== C:\PaceUp\src\hooks\useMusicEngine.ts =====
 import { useState, useRef, useCallback } from 'react';
 
 export type MusicStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
@@ -4165,7 +4498,7 @@ export function useMusicEngine() {
   };
 }
 
-===== C:\runcadence\src\hooks\useSpeechCoach.ts =====
+===== C:\PaceUp\src\hooks\useSpeechCoach.ts =====
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 interface SpeakOptions {
@@ -4245,7 +4578,7 @@ export function useSpeechCoach() {
   };
 }
 
-===== C:\runcadence\src\hooks\useTiroWorkout.ts =====
+===== C:\PaceUp\src\hooks\useTiroWorkout.ts =====
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export type TiroStepType = 'warmup' | 'run' | 'rest' | 'cooldown';
@@ -4287,8 +4620,8 @@ interface SpeakOptions {
   priority?: 'low' | 'normal' | 'high';
 }
 
-const BASE_COOLDOWN_MS = 12000;
 const PACE_ALERT_COOLDOWN_MS = 8000;
+const PACE_CHECK_INTERVAL_MS = 3000;
 const DEFAULT_REPEAT_COUNT = 5;
 const DEFAULT_WARMUP_SECONDS = 300;
 const DEFAULT_REST_SECONDS = 60;
@@ -4298,12 +4631,6 @@ const DEFAULT_TARGET_PACE_MIN = 4.5;
 const DEFAULT_TARGET_PACE_MAX = 5.0;
 const DEFAULT_REF_PACE = 5.0;
 const COUNTDOWN_SECONDS = 3;
-
-function getPriorityMultiplier(priority: SpeakOptions['priority']): number {
-  if (priority === 'high') return 0.55;
-  if (priority === 'low') return 1.6;
-  return 1;
-}
 
 function formatPace(paceMinKm?: number | null): string {
   if (!paceMinKm || !Number.isFinite(paceMinKm) || paceMinKm <= 0) return '--:--';
@@ -4433,10 +4760,15 @@ function expandWorkoutBlocks(blocks: TiroBlock[]): TiroExecutionBlock[] {
   const normalized = blocks.map(normalizeBlock);
   const expanded: TiroExecutionBlock[] = [];
 
-  normalized.forEach((block) => {
-    const repeatTotal = block.stepType === 'run' ? Math.max(1, block.repeatCount ?? DEFAULT_REPEAT_COUNT) : 1;
+  for (let idx = 0; idx < normalized.length; idx += 1) {
+    const block = normalized[idx];
 
-    if (block.stepType === 'run' && repeatTotal > 1) {
+    // Garmin flow: when run is followed by rest, repeat the pair N times.
+    if (block.stepType === 'run') {
+      const repeatTotal = Math.max(1, block.repeatCount ?? DEFAULT_REPEAT_COUNT);
+      const nextBlock = normalized[idx + 1];
+      const hasPairedRest = nextBlock?.stepType === 'rest';
+
       for (let repeatIndex = 1; repeatIndex <= repeatTotal; repeatIndex += 1) {
         expanded.push({
           ...block,
@@ -4444,8 +4776,22 @@ function expandWorkoutBlocks(blocks: TiroBlock[]): TiroExecutionBlock[] {
           repeatIndex,
           repeatTotal,
         });
+
+        if (hasPairedRest) {
+          expanded.push({
+            ...nextBlock,
+            executionIndex: expanded.length,
+            repeatIndex,
+            repeatTotal,
+          });
+        }
       }
-      return;
+
+      if (hasPairedRest) {
+        idx += 1;
+      }
+
+      continue;
     }
 
     expanded.push({
@@ -4454,7 +4800,7 @@ function expandWorkoutBlocks(blocks: TiroBlock[]): TiroExecutionBlock[] {
       repeatIndex: 1,
       repeatTotal: 1,
     });
-  });
+  }
 
   return expanded;
 }
@@ -4483,6 +4829,7 @@ export function useTiroWorkout() {
   const telemetryRef = useRef(telemetry);
   const referencePaceRef = useRef(referencePaceMinKm);
   const paceAlertCooldownRef = useRef(0);
+  const lastPaceCheckRef = useRef(0);
   const templateStartElapsedRef = useRef(0);
   const templateStartDistanceRef = useRef(0);
   const blockStartElapsedRef = useRef(0);
@@ -4533,6 +4880,7 @@ export function useTiroWorkout() {
     repeatBlocksCompletedRef.current = 0;
     repeatTotalRef.current = executionBlocksRef.current.filter((block) => block.stepType === 'run').length;
     paceAlertCooldownRef.current = 0;
+    lastPaceCheckRef.current = 0;
     blockDistanceAccumulatedRef.current = 0;
     totalDistanceAccumulatedRef.current = 0;
     blockStartElapsedRef.current = 0;
@@ -4576,12 +4924,29 @@ export function useTiroWorkout() {
     }
 
     if (block.stepType === 'rest') {
+      if (block.durationType === 'open') {
+        speak('RecuperaÃ§Ã£o aberta. Pressione PrÃ³ximo quando estiver pronto.');
+        return;
+      }
+
+      if (block.durationType === 'distancia') {
+        speak(`RecuperaÃ§Ã£o. ${block.durationValue} metros.`);
+        return;
+      }
+
       speak(`RecuperaÃ§Ã£o. ${block.durationValue} segundos.`);
       return;
     }
 
     if (block.stepType === 'run') {
-      const paceText = paceLabel ? `Corra ${block.durationValue} metros em ${paceLabel}.` : `Corra ${block.durationValue} metros.`;
+      const durationText = block.durationType === 'distancia'
+        ? `${block.durationValue} metros`
+        : block.durationType === 'tempo'
+          ? `${block.durationValue} segundos`
+          : 'atÃ© pressionar PrÃ³ximo';
+      const paceText = paceLabel
+        ? `Corra ${durationText} em ${paceLabel}.`
+        : `Corra ${durationText}.`;
       const prefix = `Tiro ${currentRepeat}. `;
       speak(`${prefix}${paceText}`.trim(), { priority: 'high' });
     }
@@ -4817,6 +5182,11 @@ export function useTiroWorkout() {
 
     if (block.targetPaceMin && block.targetPaceMax && input.currentPaceMinKm > 0) {
       const now = Date.now();
+      if (now - lastPaceCheckRef.current < PACE_CHECK_INTERVAL_MS) {
+        return;
+      }
+      lastPaceCheckRef.current = now;
+
       if (now - paceAlertCooldownRef.current >= PACE_ALERT_COOLDOWN_MS) {
         if (input.currentPaceMinKm > block.targetPaceMax) {
           speak('Acelere, voce esta abaixo da zona de pace', { priority: 'normal' });
@@ -4895,7 +5265,7 @@ export function useTiroWorkout() {
   };
 }
 
-===== C:\runcadence\src\hooks\useWorkoutHistory.ts =====
+===== C:\PaceUp\src\hooks\useWorkoutHistory.ts =====
 import { useMemo, useState } from 'react';
 import type { RoutePoint } from './useGPS';
 
@@ -5028,7 +5398,7 @@ export function useWorkoutHistory() {
   };
 }
 
-===== C:\runcadence\src\lib\supabase.ts =====
+===== C:\PaceUp\src\lib\supabase.ts =====
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -5062,7 +5432,7 @@ export async function checkSupabaseHealth(): Promise<boolean> {
   return !error;
 }
 
-===== C:\runcadence\src\main.tsx =====
+===== C:\PaceUp\src\main.tsx =====
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
@@ -5073,7 +5443,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <App />
   </React.StrictMode>,
 )
-===== C:\runcadence\src\services\syncService.ts =====
+===== C:\PaceUp\src\services\syncService.ts =====
 import type { WorkoutSession } from '../hooks/useWorkoutHistory';
 import { getSupabaseClient } from '../lib/supabase';
 
@@ -5144,7 +5514,7 @@ export async function pullSessionsSince(userId: string, sinceIso: string) {
   return data;
 }
 
-===== C:\runcadence\src\vite-env.d.ts =====
+===== C:\PaceUp\src\vite-env.d.ts =====
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
