@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PaceUp – Treino</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #161a22;
+    --surface2: #1e2330;
+    --border: #2a3040;
+    --accent: #00e5a0;
+    --accent2: #ff5e3a;
+    --accent3: #4d9fff;
+    --text: #e8eaf0;
+    --muted: #6b7490;
+  }
+
+  html, body {
+    background: #0a0c10;
+    color: var(--text);
+    font-family: 'Readex Pro', 'Rajdhani', sans-serif;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  .phone {
+    width: 375px;
+    min-height: 812px;
+    background: var(--bg);
+    border-radius: 40px;
+    border: 2px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 60px rgba(0,229,160,0.08), 0 30px 80px rgba(0,0,0,0.6);
+    position: relative;
+  }
+
+  /* STATUS BAR */
+  .statusbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px 6px;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+  .statusbar .time { font-weight: 700; color: var(--text); letter-spacing: 1px; }
+  .statusbar .icons { display: flex; gap: 6px; align-items: center; }
+  .statusbar .icons span { font-size: 13px; }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 16px 8px;
+    flex-shrink: 0;
+  }
+  .menu-btn {
+    background: none; border: none; cursor: pointer;
+    display: flex; flex-direction: column; gap: 4px; padding: 4px;
+  }
+  .menu-btn span { display: block; width: 20px; height: 2px; background: var(--muted); border-radius: 2px; }
+  .app-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px; font-weight: 900;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(0,229,160,0.4);
+  }
+  .header-right { width: 28px; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+  .tab {
+    flex: 1; text-align: center;
+    padding: 10px 2px 8px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* CONTENT */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scrollbar-width: none;
+  }
+  .content::-webkit-scrollbar { display: none; }
+
+  /* ── STATUS PILL ── */
+  .status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    border-radius: 30px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    background: rgba(0,229,160,0.08);
+    border: 1px solid rgba(0,229,160,0.25);
+    color: var(--accent);
+  }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    animation: blink 1.4s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .gps-chip {
+    display: flex; align-items: center; gap: 5px;
+    padding: 6px 12px;
+    background: rgba(77,159,255,0.08);
+    border: 1px solid rgba(77,159,255,0.25);
+    border-radius: 20px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px; font-weight: 700;
+    color: var(--accent3); letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .gps-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent3);
+    animation: pulse 1.6s infinite;
+    box-shadow: 0 0 6px var(--accent3);
+  }
+  @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.4);opacity:0.6} }
+
+  /* ── MAP ── */
+  .map-wrap {
+    background: #111620;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    height: 158px;
+  }
+  .map-wrap svg { width: 100%; height: 100%; display: block; }
+  .map-badge {
+    position: absolute; top: 10px; left: 12px;
+    background: rgba(13,15,20,0.8);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-family: 'Orbitron', monospace;
+    font-size: 9px; color: var(--muted); letter-spacing: 1px;
+    text-transform: uppercase;
+    backdrop-filter: blur(4px);
+  }
+
+  /* ── PACE PRINCIPAL ── */
+  .pace-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .pace-hero-main { flex: 1; }
+  .pace-hero-lbl {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;
+  }
+  .pace-hero-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 42px; font-weight: 700;
+    color: var(--accent); line-height: 1;
+    text-shadow: 0 0 24px rgba(0,229,160,0.3);
+    letter-spacing: -1px;
+  }
+  .pace-hero-unit {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px; color: var(--muted);
+    margin-top: 4px; letter-spacing: 0.5px;
+  }
+  .pace-hero-side { text-align: right; }
+  .pace-music-lbl {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;
+  }
+  .pace-music-val {
+    font-family: 'Readex Pro', monospace;
+    font-size: 20px; font-weight: 700;
+    color: var(--accent3);
+  }
+  .pace-music-sub {
+    font-size: 10px; color: var(--muted); margin-top: 3px;
+  }
+
+  /* ── MÉTRICAS 2×2 ── */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .metric-card::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0.5;
+  }
+  .metric-card.blue::before { background: var(--accent3); }
+  .metric-card.orange::before { background: var(--accent2); }
+  .metric-card.purple::before { background: #b06efc; }
+  .mc-lbl {
+    font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+  .mc-val {
+    font-family: 'Readex Pro', monospace;
+    font-size: 24px; font-weight: 700;
+    color: var(--text); line-height: 1;
+  }
+  .mc-val.accent { color: var(--accent); }
+  .mc-val.blue { color: var(--accent3); }
+  .mc-unit {
+    font-size: 11px; color: var(--muted); margin-left: 2px;
+  }
+
+  /* ── BPM ROW ── */
+  .bpm-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .bpm-block-title {
+    font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .bpm-row {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .bpm-btn {
+    width: 40px; height: 40px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: var(--accent);
+    cursor: pointer; flex-shrink: 0; font-weight: 700;
+    transition: background 0.15s;
+  }
+  .bpm-btn:active { background: rgba(0,229,160,0.1); }
+  .bpm-display {
+    flex: 1; text-align: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    font-family: 'Orbitron', monospace;
+    font-size: 22px; font-weight: 700;
+    color: var(--text); line-height: 1.2;
+  }
+  .bpm-display .bpm-unit { font-size: 10px; color: var(--muted); display: block; }
+
+  /* ── TRACK ── */
+  .track-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px;
+  }
+  .track-icon {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #1a2a1a, #0a1f14);
+    border: 1px solid rgba(0,229,160,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .track-info { flex: 1; }
+  .track-name { font-size: 14px; font-weight: 700; color: var(--text); }
+  .track-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .add-btn {
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 13px; color: var(--accent);
+    cursor: pointer; font-weight: 600; flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* ── PLAYER ── */
+  .player-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 10px;
+  }
+  .player-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 4px;
+  }
+  .pc-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 22px;
+    padding: 8px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.2s;
+  }
+  .pc-btn.small { font-size: 16px; }
+  .pc-btn.play {
+    background: var(--accent);
+    color: var(--bg);
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    font-size: 20px;
+    box-shadow: 0 0 20px rgba(0,229,160,0.35);
+  }
+  .player-labels {
+    display: flex;
+    justify-content: space-around;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+  }
+  .pl-lbl {
+    font-size: 10px; color: var(--muted);
+    text-align: center; font-weight: 600;
+    letter-spacing: 0.2px; line-height: 1.4;
+  }
+
+  /* ── START/STOP BTN ── */
+  .start-row {
+    display: flex; gap: 8px;
+  }
+  .btn-start {
+    flex: 1; padding: 14px;
+    background: var(--accent);
+    border: none; border-radius: 12px;
+    font-family: 'Orbitron', monospace;
+    font-size: 13px; font-weight: 700;
+    color: var(--bg); letter-spacing: 2px;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 0 0 24px rgba(0,229,160,0.3);
+    transition: opacity 0.2s;
+  }
+  .btn-start:active { opacity: 0.85; }
+  .btn-stop {
+    width: 52px; padding: 14px;
+    background: rgba(255,94,58,0.12);
+    border: 1px solid rgba(255,94,58,0.35);
+    border-radius: 12px;
+    color: var(--accent2);
+    font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* BOTTOM NAV */
+  .bottomnav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 12px 0 20px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+  .nav-btn {
+    background: none; border: none;
+    color: var(--muted); font-size: 20px;
+    cursor: pointer; padding: 4px 12px;
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- STATUS BAR -->
+  <div class="statusbar">
+    <span class="time">04:01</span>
+    <div class="icons"><span>📶</span><span>🔋</span></div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <button class="menu-btn"><span></span><span></span><span></span></button>
+    <div class="app-logo">PACE UP</div>
+    <div class="header-right"></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active">Treino</div>
+    <div class="tab">Música</div>
+    <div class="tab">Tiro</div>
+    <div class="tab">Histórico</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- STATUS + GPS -->
+    <div class="status-row">
+      <div class="status-pill">
+        <div class="status-dot"></div>
+        Correndo
+      </div>
+      <div class="gps-chip">
+        <div class="gps-dot"></div>
+        GPS Ativo
+      </div>
+    </div>
+
+    <!-- MAPA DE TRAJETO -->
+    <div class="map-wrap">
+      <div class="map-badge">Trajeto ao Vivo</div>
+      <svg viewBox="0 0 340 150" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <!-- fundo ruas simuladas -->
+        <rect width="340" height="150" fill="#111620"/>
+        <g stroke="#1a2030" stroke-width="0.8" fill="none">
+          <line x1="0" y1="37" x2="340" y2="37"/>
+          <line x1="0" y1="74" x2="340" y2="74"/>
+          <line x1="0" y1="111" x2="340" y2="111"/>
+          <line x1="56" y1="0" x2="56" y2="150"/>
+          <line x1="113" y1="0" x2="113" y2="150"/>
+          <line x1="170" y1="0" x2="170" y2="150"/>
+          <line x1="227" y1="0" x2="227" y2="150"/>
+          <line x1="284" y1="0" x2="284" y2="150"/>
+        </g>
+        <!-- Rota real do GPX -->
+        <polyline
+          points="197.0,46.7 230.5,70.3 288.1,62.2 292.5,39.6 243.2,16.0 190.3,27.9 130.8,50.5 66.5,73.5 43.8,99.5 88.7,119.9 148.5,115.3 199.8,94.9 258.2,74.8 311.7,52.9 270.5,29.6 229.3,11.8 183.1,26.4 133.2,45.1 86.4,63.3 38.3,82.1 44.3,101.3 87.0,118.9 136.2,119.7 180.8,103.5 223.7,85.6 272.9,69.5 313.7,53.3 276.6,32.6 234.7,11.9 187.9,25.0 140.4,39.4 96.2,57.8 50.7,77.8 36.7,96.8 85.0,117.7 145.3,128.2 188.4,99.1 246.6,77.7 299.0,59.0 284.4,38.4 245.5,17.4 192.0,24.4 141.1,41.3 95.2,59.6 44.7,79.0 40.6,99.2 84.4,118.2 137.9,120.7 184.9,102.6 227.0,85.2 274.6,67.8 316.7,49.0 271.4,30.5 223.1,11.6 180.0,29.1 129.2,46.9 73.6,66.7 28.7,84.8 52.2,105.6 97.8,122.9 149.6,115.9 194.0,97.3 245.2,79.1 288.1,62.7 303.1,45.5 264.0,25.4 221.4,11.0 169.5,33.9 112.2,51.4 63.3,73.6 40.1,98.5 84.0,117.0 132.0,120.2 187.9,102.1 232.5,84.3 209.2,63.6 172.7,42.6 117.4,52.7 58.1,73.4 20.4,89.1 62.6,99.0 101.7,82.6"
+          fill="none" stroke="#00e5a0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+        <!-- glow layer -->
+        <polyline
+          points="197.0,46.7 230.5,70.3 288.1,62.2 292.5,39.6 243.2,16.0 190.3,27.9 130.8,50.5 66.5,73.5 43.8,99.5 88.7,119.9"
+          fill="none" stroke="#00e5a0" stroke-width="4" stroke-linecap="round" opacity="0.15"/>
+        <!-- ponto inicial -->
+        <circle cx="197.0" cy="46.7" r="5" fill="#4d9fff" stroke="#0d0f14" stroke-width="2"/>
+        <!-- posição atual -->
+        <circle cx="101.7" cy="82.6" r="7" fill="#4d9fff" stroke="white" stroke-width="2"/>
+        <circle cx="101.7" cy="82.6" r="13" fill="none" stroke="#4d9fff" stroke-width="1" opacity="0.35"/>
+      </svg>
+    </div>
+
+    <!-- PACE PRINCIPAL -->
+    <div class="pace-hero">
+      <div class="pace-hero-main">
+        <div class="pace-hero-lbl">Pace Atual</div>
+        <div class="pace-hero-val">5:05</div>
+        <div class="pace-hero-unit">min/km</div>
+      </div>
+      <div style="width:1px;height:56px;background:var(--border);flex-shrink:0;"></div>
+      <div class="pace-hero-side">
+        <div class="pace-music-lbl">Pace da Música</div>
+        <div class="pace-music-val">4:49</div>
+        <div class="pace-music-sub">min/km</div>
+      </div>
+    </div>
+
+    <!-- MÉTRICAS 2×2 -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="mc-lbl">Distância</div>
+        <div class="mc-val accent">1,24<span class="mc-unit">km</span></div>
+      </div>
+      <div class="metric-card blue">
+        <div class="mc-lbl">Tempo Atividade</div>
+        <div class="mc-val blue" style="font-size:20px;">00:09:00</div>
+      </div>
+      <div class="metric-card orange">
+        <div class="mc-lbl">Cadência</div>
+        <div class="mc-val" style="color:var(--accent2)">162<span class="mc-unit">spm</span></div>
+      </div>
+      <div class="metric-card purple">
+        <div class="mc-lbl">Passada</div>
+        <div class="mc-val" style="color:#b06efc">0,99<span class="mc-unit">m</span></div>
+      </div>
+    </div>
+
+    <!-- BPM CONTROL -->
+    <div class="bpm-block">
+      <div class="bpm-block-title">Controle de BPM</div>
+      <div class="bpm-row">
+        <div class="bpm-btn">−</div>
+        <div class="bpm-display">
+          186
+          <span class="bpm-unit">BPM</span>
+        </div>
+        <div class="bpm-btn">+</div>
+      </div>
+    </div>
+
+    <!-- TRACK INFO -->
+    <div class="track-row">
+      <div class="track-icon">🎵</div>
+      <div class="track-info">
+        <div class="track-name">Given Up</div>
+        <div class="track-meta">Linkin Park · 186 BPM</div>
+      </div>
+      <div class="add-btn">♪ +</div>
+    </div>
+
+    <!-- PLAYER -->
+    <div class="player-block">
+      <div class="player-row">
+        <button class="pc-btn small" title="Repetir">🔁</button>
+        <button class="pc-btn" title="Voltar">⏮</button>
+        <button class="pc-btn play" title="Play/Pause">▶</button>
+        <button class="pc-btn" title="Próxima">⏭</button>
+        <button class="pc-btn small" title="Lista">≡</button>
+      </div>
+      <div class="player-labels">
+        <span class="pl-lbl">Repetir<br>Música</span>
+        <span class="pl-lbl">Voltar<br>Música</span>
+        <span class="pl-lbl">Play /<br>Pause</span>
+        <span class="pl-lbl">Passar<br>Música</span>
+        <span class="pl-lbl">Lista de<br>Música</span>
+      </div>
+    </div>
+
+    <!-- START / STOP -->
+    <div class="start-row">
+      <button class="btn-start">▶ &nbsp;INICIAR CORRIDA</button>
+      <button class="btn-stop">■</button>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bottomnav">
+    <button class="nav-btn" title="Recentes">|||</button>
+    <button class="nav-btn" title="Início">□</button>
+    <button class="nav-btn" title="Voltar">‹</button>
+  </div>
+
+</div>
+</body>
+</html>

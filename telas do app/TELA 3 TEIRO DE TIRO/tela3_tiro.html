@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PaceUp – Tiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #161a22;
+    --surface2: #1e2330;
+    --border: #2a3040;
+    --accent: #00e5a0;
+    --accent2: #ff5e3a;
+    --warn: #ffb800;
+    --text: #e8eaf0;
+    --muted: #6b7490;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Readex Pro', 'Rajdhani', sans-serif;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  .phone {
+    width: 375px;
+    min-height: 812px;
+    background: var(--bg);
+    border-radius: 40px;
+    border: 2px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 60px rgba(255,94,58,0.08), 0 30px 80px rgba(0,0,0,0.6);
+  }
+
+  .statusbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px 6px;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--bg);
+  }
+  .statusbar .time { font-weight: 700; color: var(--text); letter-spacing: 1px; }
+  .statusbar .icons { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 16px 8px;
+  }
+  .menu-btn {
+    background: none; border: none; cursor: pointer;
+    display: flex; flex-direction: column; gap: 4px; padding: 4px;
+  }
+  .menu-btn span { display: block; width: 20px; height: 2px; background: var(--muted); border-radius: 2px; }
+
+  .app-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px; font-weight: 900;
+    color: var(--accent2);
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(255,94,58,0.4);
+  }
+
+  .coach-btn {
+    background: var(--surface2);
+    border: 1px solid var(--accent2);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 10px; font-weight: 700;
+    color: var(--accent2); letter-spacing: 0.5px;
+    text-transform: uppercase; cursor: pointer;
+    line-height: 1.3; text-align: center;
+  }
+
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    padding: 0 4px;
+  }
+  .tab {
+    flex: 1; text-align: center;
+    padding: 10px 2px 8px;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--muted); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    text-transform: uppercase;
+  }
+  .tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scrollbar-width: none;
+  }
+  .content::-webkit-scrollbar { display: none; }
+
+  /* COUNTDOWN + PACE */
+  .top-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 80px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+  .countdown-box {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: auto;
+  }
+  .countdown-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; text-align: center; }
+  .countdown-nums {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+  }
+  .countdown-num {
+    font-family: 'Readex Pro', monospace;
+    font-size: 16px; font-weight: 700;
+    color: var(--muted);
+    line-height: 1;
+  }
+  .countdown-num.active { color: var(--accent2); font-size: 20px; }
+
+  .pace-now {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  .pace-now .lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+  .pace-now .val {
+    font-family: 'Readex Pro', monospace;
+    font-size: 28px; font-weight: 700;
+    color: var(--accent2);
+    line-height: 1;
+    text-shadow: 0 0 20px rgba(255,94,58,0.3);
+  }
+  .pace-now .unit { font-size: 10px; color: var(--muted); }
+
+  .dist-done {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 2px;
+  }
+  .dist-done .lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+  .dist-done .val {
+    font-family: 'Readex Pro', monospace;
+    font-size: 20px; font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+  }
+  .dist-done .unit { font-size: 10px; color: var(--accent); font-weight: 600; }
+
+  .coach-voice-tag {
+    align-self: center;
+    background: var(--accent2);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 6px;
+    font-size: 10px; font-weight: 700;
+    color: #fff; text-transform: uppercase; letter-spacing: 0.3px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  /* BIG CIRCLE */
+  .center-block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+  .big-circle {
+    width: 156px; height: 156px;
+    border-radius: 50%;
+    border: 3px solid var(--accent2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, rgba(255,94,58,0.08) 0%, transparent 70%);
+    box-shadow: 0 0 30px rgba(255,94,58,0.2);
+    flex-shrink: 0;
+  }
+  .big-circle .dist-val {
+    font-family: 'Readex Pro', monospace;
+    font-size: 28px; font-weight: 900;
+    color: var(--text);
+    letter-spacing: 1px;
+  }
+  .big-circle .dist-unit {
+    font-size: 11px; color: var(--muted);
+    text-align: center; margin-top: 2px;
+    line-height: 1.2;
+  }
+  .big-circle .timer {
+    font-family: 'Readex Pro', monospace;
+    font-size: 16px; font-weight: 700;
+    color: var(--accent);
+    margin-top: 6px;
+  }
+  .big-circle .timer-sub { font-size: 10px; color: var(--muted); line-height: 1.1; }
+
+  .side-nums {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .side-nums.left {
+    order: -1;
+  }
+  .side-nums .num-label {
+    font-size: 8px; color: var(--muted); text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.3px;
+  }
+  .side-nums .num-val {
+    font-family: 'Readex Pro', monospace;
+    font-size: 16px; font-weight: 700;
+    color: var(--muted);
+    line-height: 1.1;
+  }
+  .side-nums .num-val.active {
+    color: var(--accent2);
+    font-size: 20px;
+  }
+
+  /* INTERVALS DOTS */
+  .intervals-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+  }
+  .intervals-lbl {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 10px;
+    display: flex; justify-content: space-between;
+  }
+  .dots-row {
+    display: flex;
+    gap: 3px;
+    flex-wrap: nowrap;
+    justify-content: center;
+  }
+  .dot {
+    width: 19px; height: 19px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 7px; font-weight: 700;
+    color: var(--muted);
+    font-family: 'Readex Pro', monospace;
+  }
+  .dot.done {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+  }
+  .dot.current {
+    background: var(--accent2);
+    border-color: var(--accent2);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(255,94,58,0.5);
+  }
+
+  .dot.warmup {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+    font-size: 9px;
+    font-weight: 900;
+  }
+  .dot.cooldown {
+    background: var(--accent2);
+    border-color: var(--accent2);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 900;
+  }
+
+  /* EDIT ROW */
+  .edit-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .edit-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .edit-card:hover { border-color: var(--accent); }
+  .edit-card .ec-val {
+    font-family: 'Readex Pro', monospace;
+    font-size: 14px; font-weight: 700;
+    color: var(--accent); line-height: 1;
+  }
+  .edit-card .ec-lbl {
+    font-size: 10px; color: var(--muted);
+    text-transform: uppercase; margin-top: 4px;
+    letter-spacing: 0.3px; line-height: 1.2;
+  }
+
+  /* WARM UP */
+  .warmup-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .warmup-card {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+  }
+  .warmup-card .wc-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .warmup-card .wc-val { font-size: 14px; font-weight: 700; color: var(--text); margin-top: 3px; }
+
+  .dist-total-card {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 10px 14px;
+    text-align: center;
+    min-width: 90px;
+  }
+  .dist-total-card .dt-val {
+    font-family: 'Readex Pro', monospace;
+    font-size: 17px; font-weight: 700;
+    color: var(--accent);
+  }
+  .dist-total-card .dt-lbl { font-size: 10px; color: var(--muted); margin-top: 3px; text-transform: uppercase; }
+
+  /* TIMES LIST */
+  .times-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+  }
+  .times-block .t-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+  .times-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 16px;
+  }
+  .time-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .time-item .ti-num { color: var(--muted); font-weight: 600; }
+  .time-item .ti-val {
+    font-family: 'Readex Pro', monospace;
+    font-size: 13px; font-weight: 700;
+    color: var(--text);
+  }
+  .time-item .ti-val.done { color: var(--accent); }
+  .time-item .ti-val.pending { color: var(--border); }
+
+  /* ACTIONS */
+  .actions-row {
+    display: flex;
+    gap: 10px;
+  }
+  .action-btn {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    font-size: 14px; font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    transition: all 0.2s;
+  }
+  .action-btn.primary {
+    background: var(--accent2);
+    border-color: var(--accent2);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(255,94,58,0.3);
+  }
+  .action-btn.secondary {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .bottomnav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 12px 0 20px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .nav-btn {
+    background: none; border: none;
+    color: var(--muted); font-size: 20px;
+    cursor: pointer; padding: 4px 12px;
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- STATUS BAR -->
+  <div class="statusbar">
+    <span class="time">01:50</span>
+    <div class="icons">
+      <span>🔊</span>
+      <span>📶</span>
+      <span>🔋</span>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <button class="menu-btn">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="app-logo">PACE UP</div>
+    <div class="coach-btn">🎙 Treinador<br>Voz</div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab">Treino</div>
+    <div class="tab">Música</div>
+    <div class="tab active">Tiro</div>
+    <div class="tab">Histórico</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- COUNTDOWN + PACE -->
+    <div class="top-row">
+      <div class="pace-now">
+        <div class="lbl">Pace Atual</div>
+        <div class="val">4:30</div>
+        <div class="unit">min/km</div>
+      </div>
+      <div class="dist-done">
+        <div class="lbl">Distância Percorrida</div>
+        <div class="val">600<span class="unit">m</span></div>
+      </div>
+      <div class="coach-voice-tag">🎙 Treinador</div>
+    </div>
+
+    <!-- CIRCLE + NÚMEROS SIMÉTRICOS -->
+    <div class="center-block">
+      <div class="side-nums left">
+        <div class="num-label">Inicia</div>
+        <div class="num-val">3</div>
+        <div class="num-val">2</div>
+        <div class="num-val active">1</div>
+      </div>
+      <div class="big-circle">
+        <div class="dist-val">400</div>
+        <div class="dist-unit">metros restantes</div>
+        <div class="timer">1:10+</div>
+        <div class="timer-sub">tempo decorrido</div>
+      </div>
+      <div class="side-nums">
+        <div class="num-label">Fim em</div>
+        <div class="num-val">3</div>
+        <div class="num-val">2</div>
+        <div class="num-val active">1</div>
+      </div>
+    </div>
+
+    <!-- INTERVALS -->
+    <div class="intervals-wrap">
+      <div class="intervals-lbl">
+        <span>Intervalos</span>
+        <span style="color:var(--muted)">Descanso entre os intervalos</span>
+      </div>
+      <div class="dots-row">
+          <div class="dot warmup">A</div>
+          <div class="dot done">1</div>
+          <div class="dot done">2</div>
+          <div class="dot done">3</div>
+          <div class="dot current">4</div>
+          <div class="dot">5</div>
+          <div class="dot">6</div>
+          <div class="dot">7</div>
+          <div class="dot">8</div>
+          <div class="dot">9</div>
+          <div class="dot">10</div>
+          <div class="dot cooldown">D</div>
+      </div>
+    </div>
+
+    <!-- EDIT ROW -->
+    <div class="edit-row">
+      <div class="edit-card">
+        <div class="ec-val">1.000m</div>
+        <div class="ec-lbl">Distância do Tiro</div>
+      </div>
+      <div class="edit-card">
+        <div class="ec-val">1 min</div>
+        <div class="ec-lbl">Descanso</div>
+      </div>
+      <div class="edit-card">
+        <div class="ec-val">10</div>
+        <div class="ec-lbl">Repetição</div>
+      </div>
+    </div>
+
+    <!-- WARMUP + TOTAL -->
+    <div class="warmup-row">
+      <div class="warmup-card">
+        <div class="wc-lbl">Aquecimento /</div>
+        <div class="wc-lbl">Desaquecimento</div>
+        <div class="wc-val" style="margin-top:6px; font-size:11px; color:var(--accent);">Configurar ›</div>
+      </div>
+      <div class="dist-total-card">
+        <div class="dt-val">7,35km</div>
+        <div class="dt-lbl">Distância Total</div>
+        <div style="font-size:9px; color:var(--muted); margin-top:2px;">Total da corrida</div>
+      </div>
+    </div>
+
+    <!-- TIMES LIST -->
+    <div class="times-block">
+      <div class="t-title">Tempo de Cada Tiro</div>
+      <div class="times-grid">
+        <div class="time-item">
+          <span class="ti-num">① </span>
+          <span class="ti-val done">01:10</span>
+        </div>
+        <div class="time-item">
+          <span class="ti-num">⑥ </span>
+          <span class="ti-val pending">--:--</span>
+        </div>
+        <div class="time-item">
+          <span class="ti-num">② </span>
+          <span class="ti-val done">00:00</span>
+        </div>
+        <div class="time-item">
+          <span class="ti-num">⑦ </span>
+          <span class="ti-val pending">--:--</span>
+        </div>
+        <div class="time-item">
+          <span class="ti-num">③ </span>
+          <span class="ti-val done">00:00</span>
+        </div>
+        <div class="time-item">
+          <span class="ti-num">⑧ </span>
+          <span class="ti-val pending">--:--</span>
+        </div>
+        <div class="time-item">
+          <span class="ti-num">④ </span>
+          <span class="ti-val done">00:00</span>
+        </div>
+        <div class="time-item">
+          <span class="ti-num">⑨ </span>
+          <span class="ti-val pending">--:--</span>
+        </div>
+        <div class="time-item">
+          <span class="ti-num">⑤ </span>
+          <span class="ti-val done">00:00</span>
+        </div>
+        <div class="time-item">
+          <span class="ti-num">⑩ </span>
+          <span class="ti-val pending">--:--</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="actions-row">
+      <div class="action-btn secondary">Início</div>
+      <div class="action-btn primary">▶ Modo Automático</div>
+      <div class="action-btn">Fim</div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bottomnav">
+    <button class="nav-btn">|||</button>
+    <button class="nav-btn">□</button>
+    <button class="nav-btn">‹</button>
+  </div>
+
+</div>
+</body>
+</html>

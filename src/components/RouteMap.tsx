@@ -26,6 +26,31 @@ export function RouteMap({ routePoints, currentLat, currentLng, isActive }: Rout
   useEffect(() => {
     if (loadedRef.current) return;
 
+    const style = document.createElement('style');
+    style.id = 'paceup-leaflet-theme';
+    style.textContent = `
+      .paceup-tiles {
+        filter: hue-rotate(82deg) saturate(0.72) brightness(0.56) contrast(1.2);
+      }
+
+      .leaflet-container {
+        background: radial-gradient(circle at 24% 18%, #172436 0%, #111620 45%, #0d0f14 100%);
+      }
+
+      .leaflet-control-zoom a {
+        background: rgba(14, 18, 26, 0.92) !important;
+        color: #00e5a0 !important;
+        border-color: #2a3040 !important;
+      }
+
+      .leaflet-control-zoom a:hover {
+        background: rgba(0, 229, 160, 0.14) !important;
+      }
+    `;
+    if (!document.getElementById(style.id)) {
+      document.head.appendChild(style);
+    }
+
     const link = document.createElement('link');
     link.rel  = 'stylesheet';
     link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
@@ -46,8 +71,10 @@ export function RouteMap({ routePoints, currentLat, currentLng, isActive }: Rout
       attributionControl: false,
     }).setView([-8.9, -40.5], 15);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
+      subdomains: 'abcd',
+      className: 'paceup-tiles',
     }).addTo(map);
 
     polylineRef.current = L.polyline([], {
@@ -117,7 +144,7 @@ export function RouteMap({ routePoints, currentLat, currentLng, isActive }: Rout
   return (
     <div
       ref={containerRef}
-      style={{ width: '100%', height: '220px', background: '#0d1118' }}
+      style={{ width: '100%', height: '100%', minHeight: '220px', background: '#0d1118' }}
     />
   );
 }

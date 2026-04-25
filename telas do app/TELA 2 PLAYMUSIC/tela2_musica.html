@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PaceUp – Música</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #161a22;
+    --surface2: #1e2330;
+    --border: #2a3040;
+    --accent: #00e5a0;
+    --accent2: #ff5e3a;
+    --text: #e8eaf0;
+    --muted: #6b7490;
+    --tab-active: #00e5a0;
+    --tab-bg: #1e2330;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Readex Pro', 'Rajdhani', sans-serif;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  .phone {
+    width: 375px;
+    min-height: 812px;
+    background: var(--bg);
+    border-radius: 40px;
+    border: 2px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 60px rgba(0,229,160,0.08), 0 30px 80px rgba(0,0,0,0.6);
+    position: relative;
+  }
+
+  /* STATUS BAR */
+  .statusbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px 6px;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--bg);
+  }
+  .statusbar .time { font-weight: 700; color: var(--text); letter-spacing: 1px; }
+  .statusbar .icons { display: flex; gap: 6px; align-items: center; }
+  .statusbar .icons span { font-size: 13px; }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 16px 8px;
+  }
+  .menu-btn {
+    background: none; border: none; cursor: pointer;
+    display: flex; flex-direction: column; gap: 4px; padding: 4px;
+  }
+  .menu-btn span {
+    display: block; width: 20px; height: 2px;
+    background: var(--muted); border-radius: 2px;
+  }
+  .app-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px; font-weight: 900;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(0,229,160,0.4);
+  }
+  .header-right { width: 28px; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    padding: 0 4px;
+  }
+  .tab {
+    flex: 1; text-align: center;
+    padding: 10px 2px 8px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* CONTENT */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scrollbar-width: none;
+  }
+  .content::-webkit-scrollbar { display: none; }
+
+  /* PACE CARDS */
+  .pace-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .pace-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .pace-card .label {
+    font-size: 11px; font-weight: 600;
+    color: var(--muted); letter-spacing: 0.8px;
+    text-transform: uppercase; margin-bottom: 4px;
+  }
+  .pace-card .value {
+    font-family: 'Readex Pro', monospace;
+    font-size: 22px; font-weight: 700;
+    color: var(--text);
+  }
+  .pace-card .value.accent { color: var(--accent); }
+  .pace-card .unit {
+    font-size: 11px; color: var(--muted); margin-left: 2px;
+  }
+
+  /* INFO ROW */
+  .info-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .info-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .info-item .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .info-item .val { font-family: 'Readex Pro', monospace; font-size: 15px; font-weight: 700; color: var(--accent); margin-top: 3px; }
+
+  /* TOGGLE */
+  .toggle-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .toggle-label { font-size: 14px; font-weight: 600; color: var(--text); }
+  .toggle-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .toggle {
+    width: 44px; height: 24px;
+    background: var(--accent);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    right: 3px; top: 3px;
+    width: 18px; height: 18px;
+    background: var(--bg);
+    border-radius: 50%;
+  }
+
+  /* METRONOME */
+  .metronome-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+  }
+  .metronome-block .blk-title {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .bpm-row {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+  }
+  .bpm-btn {
+    width: 42px; height: 42px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: var(--accent);
+    cursor: pointer; flex-shrink: 0;
+    font-weight: 700;
+  }
+  .bpm-display {
+    flex: 1; text-align: center;
+    font-family: 'Readex Pro', monospace;
+    font-size: 20px; font-weight: 700;
+    color: var(--text);
+  }
+  .bpm-display .bpm-unit { font-size: 12px; color: var(--muted); }
+
+  .vel-manual-label {
+    text-align: center;
+    font-size: 12px; font-weight: 600;
+    color: var(--muted); letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 8px 0 6px;
+    border-top: 1px solid var(--border);
+    margin-top: 6px;
+  }
+
+  /* PROGRESS BAR / WAVEFORM */
+  .track-progress {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+  }
+  .time-row {
+    display: flex; justify-content: space-between;
+    font-family: 'Readex Pro', monospace;
+    font-size: 12px; color: var(--muted); margin-bottom: 10px;
+  }
+  .waveform {
+    height: 42px;
+    position: relative;
+    margin-bottom: 10px;
+  }
+  .waveform svg { width: 100%; height: 100%; }
+  .progress-bar {
+    height: 3px; background: var(--border);
+    border-radius: 2px; position: relative;
+  }
+  .progress-fill {
+    position: absolute; left: 0; top: 0;
+    height: 100%; width: 38%;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+  .progress-dot {
+    position: absolute; top: 50%; left: 38%;
+    transform: translate(-50%, -50%);
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(0,229,160,0.6);
+  }
+
+  /* TRACK INFO */
+  .track-info {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .track-text .track-name {
+    font-size: 15px; font-weight: 700; color: var(--text);
+  }
+  .track-text .track-meta {
+    font-size: 12px; color: var(--muted); margin-top: 3px;
+  }
+  .add-music-btn {
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex; align-items: center; gap: 4px;
+    font-size: 13px; color: var(--accent);
+    cursor: pointer; font-weight: 600;
+  }
+
+  /* PLAYER CONTROLS */
+  .player-controls {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 10px;
+  }
+  .controls-top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 4px; margin-bottom: 12px;
+  }
+  .ctrl-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 20px;
+    padding: 8px; border-radius: 8px;
+    transition: color 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ctrl-btn.small { font-size: 14px; }
+  .ctrl-btn.play-btn {
+    background: var(--accent);
+    color: var(--bg);
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    font-size: 22px;
+    box-shadow: 0 0 20px rgba(0,229,160,0.3);
+  }
+  .controls-bottom {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 4px 0;
+    border-top: 1px solid var(--border);
+  }
+  .skip-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 11px; color: var(--muted);
+    font-weight: 600; letter-spacing: 0.5px;
+    cursor: pointer; text-align: center;
+    line-height: 1.2;
+  }
+  .skip-btn .sec { font-family: 'Readex Pro', monospace; font-size: 12px; color: var(--text); display: block; }
+  .pause-center {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 20px; color: var(--muted);
+    cursor: pointer;
+  }
+  .queue-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 16px; color: var(--muted);
+    cursor: pointer;
+  }
+
+  /* BOTTOM NAV */
+  .bottomnav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 12px 0 20px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .nav-btn {
+    background: none; border: none;
+    color: var(--muted); font-size: 20px;
+    cursor: pointer; padding: 4px 12px;
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- STATUS BAR -->
+  <div class="statusbar">
+    <span class="time">01:50</span>
+    <div class="icons">
+      <span>📶</span>
+      <span>🔋</span>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <button class="menu-btn" title="Menu de Telas">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="app-logo">PACE UP</div>
+    <div class="header-right"></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab">Treino</div>
+    <div class="tab active">Música</div>
+    <div class="tab">Tiro</div>
+    <div class="tab">Histórico</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- PACE CARDS -->
+    <div class="pace-grid">
+      <div class="pace-card">
+        <div class="label">Pace Atual</div>
+        <div class="value">5:53<span class="unit">min/km</span></div>
+      </div>
+      <div class="pace-card">
+        <div class="label">Pace da Música</div>
+        <div class="value accent">6:00<span class="unit">min/km</span></div>
+      </div>
+    </div>
+
+    <!-- INFO ROW -->
+    <div class="info-row">
+      <div class="info-item">
+        <div class="lbl">BPM Música</div>
+        <div class="val">180</div>
+      </div>
+      <div class="info-item">
+        <div class="lbl">Cadência/min</div>
+        <div class="val">180</div>
+      </div>
+      <div class="info-item">
+        <div class="lbl">Passada</div>
+        <div class="val">0,99m</div>
+      </div>
+    </div>
+
+    <!-- TOGGLE AJUSTE AUTOMÁTICO -->
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">Ajuste Automático</div>
+        <div class="toggle-sub">De acordo com a velocidade do corredor</div>
+      </div>
+      <div class="toggle"></div>
+    </div>
+
+    <!-- METRÔNOMO -->
+    <div class="metronome-block">
+      <div class="blk-title">Metrônomo</div>
+      <div class="bpm-row">
+        <div class="bpm-btn">−</div>
+        <div class="bpm-display">180 <span class="bpm-unit">BPM</span></div>
+        <div class="bpm-btn">+</div>
+      </div>
+      <div class="vel-manual-label">Velocidade Manual</div>
+      <div class="bpm-row" style="margin-top:6px; margin-bottom:0;">
+        <div class="bpm-btn">−</div>
+        <div class="bpm-display" style="font-size:14px;color:var(--muted);">Ajustar BPM</div>
+        <div class="bpm-btn">+</div>
+      </div>
+    </div>
+
+    <!-- WAVEFORM / PROGRESS -->
+    <div class="track-progress">
+      <div class="time-row">
+        <span>1:10</span>
+        <span style="color:var(--accent)">● AO VIVO</span>
+        <span>2:50</span>
+      </div>
+      <div class="waveform">
+        <svg viewBox="0 0 340 40" preserveAspectRatio="none">
+          <polyline
+            points="0,20 15,10 25,28 35,8 45,30 55,15 65,25 75,5 85,30 95,18 105,22 115,12 125,28 135,8 145,25 155,20 165,30 175,10 185,22 195,15 205,28 215,8 225,25 235,18 245,30 255,12 265,22 275,8 285,28 295,15 310,25 325,18 340,20"
+            fill="none" stroke="#2a3040" stroke-width="2"/>
+          <polyline
+            points="0,20 15,10 25,28 35,8 45,30 55,15 65,25 75,5 85,30 95,18 105,22 115,12 125,28"
+            fill="none" stroke="#00e5a0" stroke-width="2"/>
+          <circle cx="125" cy="28" r="5" fill="#00e5a0" opacity="0.9"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- TRACK INFO -->
+    <div class="track-info">
+      <div class="track-text">
+        <div class="track-name">Given Up</div>
+        <div class="track-meta">Linkin Park</div>
+      </div>
+      <div class="add-music-btn">♪ +</div>
+    </div>
+
+    <!-- PLAYER CONTROLS -->
+    <div class="player-controls">
+      <div class="controls-top">
+        <button class="ctrl-btn small" title="Repetir Música">🔂</button>
+        <button class="ctrl-btn small" title="Repetir Lista">🔁</button>
+        <button class="ctrl-btn" title="Voltar Música">⏮</button>
+        <button class="ctrl-btn play-btn" title="Play/Pause">▶</button>
+        <button class="ctrl-btn" title="Próxima Música">⏭</button>
+        <button class="ctrl-btn small" title="Aleatório">🔀</button>
+      </div>
+      <div class="controls-bottom">
+        <div class="skip-btn"><span class="sec">10s</span>Voltar</div>
+        <div class="pause-center">⏸</div>
+        <div class="skip-btn"><span class="sec">10s</span>Avançar</div>
+        <div class="queue-btn">≡</div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bottomnav">
+    <button class="nav-btn" title="Recentes">|||</button>
+    <button class="nav-btn" title="Início">□</button>
+    <button class="nav-btn" title="Voltar">‹</button>
+  </div>
+
+</div><!-- /phone -->
+</body>
+</html>

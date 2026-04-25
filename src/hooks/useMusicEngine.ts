@@ -20,6 +20,7 @@ export interface MusicData {
   rateControlMode: RateControlMode;
   metronomeOn: boolean;
   metronomeBpm: number;
+  repeatTrack: boolean;
   fileName: string;
   error: string | null;
 }
@@ -97,6 +98,7 @@ export function useMusicEngine() {
     rateControlMode: 'manual',
     metronomeOn: false,
     metronomeBpm: 0,
+    repeatTrack: false,
     fileName: '',
     error: null,
   });
@@ -112,6 +114,7 @@ export function useMusicEngine() {
   const tapBpmRef = useRef<number>(0);
   const tapTimesRef = useRef<number[]>([]);
   const metronomeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const repeatTrackRef = useRef(false);
 
   const getEffectiveBpm = useCallback(() => {
     return manualBPMRef.current || tapBpmRef.current || detectedBpmRef.current || 0;
@@ -314,6 +317,11 @@ export function useMusicEngine() {
     setData((d) => ({ ...d, playbackRate: clamped }));
   }, []);
 
+  const setTrackRepeat = useCallback((enabled: boolean) => {
+    repeatTrackRef.current = enabled;
+    setData((d) => ({ ...d, repeatTrack: enabled }));
+  }, []);
+
   // ─── Playback ──────────────────────────────────────────────────────────────
   // BUG ORIGINAL: play/pause/stop não existiam — sem áudio real.
   const play = useCallback(() => {
@@ -326,6 +334,21 @@ export function useMusicEngine() {
     source.playbackRate.value = currentRateRef.current;
     source.connect(ctx.destination);
     source.start(0, pauseOffsetRef.current);
+
+    source.onended = () => {
+      if (sourceRef.current !== source) return;
+
+      sourceRef.current = null;
+
+      if (repeatTrackRef.current) {
+        pauseOffsetRef.current = 0;
+        play();
+        return;
+      }
+
+      pauseOffsetRef.current = 0;
+      setData((d) => ({ ...d, status: 'idle' }));
+    };
 
     sourceRef.current = source;
     startTimeRef.current = ctx.currentTime - pauseOffsetRef.current;
@@ -483,5 +506,6 @@ export function useMusicEngine() {
     tick,
     setRateControlMode,
     setManualPlaybackRate,
+    setTrackRepeat,
   };
 }

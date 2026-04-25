@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PaceUp – Histórico</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #161a22;
+    --surface2: #1e2330;
+    --border: #2a3040;
+    --accent: #00e5a0;
+    --accent2: #ff5e3a;
+    --accent3: #4d9fff;
+    --text: #e8eaf0;
+    --muted: #6b7490;
+  }
+
+  html, body {
+    background: #0a0c10;
+    color: var(--text);
+    font-family: 'Readex Pro', 'Rajdhani', sans-serif;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  .phone {
+    width: 375px;
+    min-height: 812px;
+    background: var(--bg);
+    border-radius: 40px;
+    border: 2px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 60px rgba(0,229,160,0.08), 0 30px 80px rgba(0,0,0,0.6);
+  }
+
+  /* STATUS BAR */
+  .statusbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px 6px;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px; color: var(--muted);
+    background: var(--bg); flex-shrink: 0;
+  }
+  .statusbar .time { font-weight: 700; color: var(--text); letter-spacing: 1px; }
+  .statusbar .icons { display: flex; gap: 6px; align-items: center; }
+  .statusbar .icons span { font-size: 13px; }
+
+  /* HEADER */
+  .header {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 4px 16px 8px; flex-shrink: 0;
+  }
+  .menu-btn {
+    background: none; border: none; cursor: pointer;
+    display: flex; flex-direction: column; gap: 4px; padding: 4px;
+  }
+  .menu-btn span { display: block; width: 20px; height: 2px; background: var(--muted); border-radius: 2px; }
+  .app-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px; font-weight: 900; color: var(--accent);
+    letter-spacing: 2px; text-shadow: 0 0 20px rgba(0,229,160,0.4);
+  }
+  .header-right { width: 28px; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface); padding: 0 4px; flex-shrink: 0;
+  }
+  .tab {
+    flex: 1; text-align: center; padding: 10px 2px 8px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+    color: var(--muted); cursor: pointer;
+    border-bottom: 2px solid transparent; text-transform: uppercase;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* CONTENT */
+  .content {
+    flex: 1; overflow-y: auto; padding: 14px 16px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+    scrollbar-width: none;
+  }
+  .content::-webkit-scrollbar { display: none; }
+
+  /* ── PERIOD FILTER ── */
+  .period-row {
+    display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+  }
+  .period-row::-webkit-scrollbar { display: none; }
+  .period-chip {
+    flex-shrink: 0; padding: 5px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px; font-weight: 600; color: var(--muted);
+    cursor: pointer; letter-spacing: 0.5px;
+    text-transform: uppercase; transition: all 0.2s;
+  }
+  .period-chip.active {
+    background: rgba(0,229,160,0.1);
+    border-color: rgba(0,229,160,0.35);
+    color: var(--accent);
+  }
+
+  /* ── CHALLENGE BANNER ── */
+  .challenge-banner {
+    background: linear-gradient(135deg, #0f1c14 0%, #101a20 100%);
+    border: 1px solid rgba(0,229,160,0.2);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .challenge-icon {
+    font-size: 28px; flex-shrink: 0;
+  }
+  .challenge-text { flex: 1; }
+  .challenge-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px; font-weight: 700;
+    color: var(--accent); letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .challenge-sub {
+    font-size: 11px; color: var(--muted); margin-top: 3px;
+  }
+  .challenge-count {
+    font-family: 'Orbitron', monospace;
+    font-size: 28px; font-weight: 900;
+    color: var(--accent); line-height: 1;
+    text-shadow: 0 0 20px rgba(0,229,160,0.4);
+    flex-shrink: 0;
+  }
+  .challenge-count span {
+    font-size: 13px; color: var(--muted);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+  }
+
+  /* ── STATS TOTAIS ── */
+  .stats-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .stat-box .sb-val {
+    font-family: 'Readex Pro', monospace;
+    font-size: 20px; font-weight: 700;
+    color: var(--text); line-height: 1;
+  }
+  .stat-box .sb-val.accent { color: var(--accent); }
+  .stat-box .sb-val.blue { color: var(--accent3); }
+  .stat-box .sb-val.orange { color: var(--accent2); }
+  .stat-box .sb-lbl {
+    font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-top: 5px;
+  }
+
+  /* ── PACE RECORDS ── */
+  .records-row {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .record-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    position: relative; overflow: hidden;
+  }
+  .record-card::after {
+    content: '★';
+    position: absolute; right: 10px; top: 8px;
+    font-size: 12px; color: rgba(0,229,160,0.3);
+  }
+  .rc-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+  .rc-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 22px; font-weight: 700;
+    color: var(--accent); line-height: 1;
+  }
+  .rc-date { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  /* ── CHART SEMANAL ── */
+  .chart-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .chart-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .chart-title { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .chart-total {
+    font-family: 'Readex Pro', monospace;
+    font-size: 14px; font-weight: 700; color: var(--accent);
+  }
+  .chart-bars {
+    display: flex; align-items: flex-end;
+    gap: 5px; height: 60px;
+    margin-bottom: 8px;
+  }
+  .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bar {
+    width: 100%; border-radius: 3px 3px 0 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    min-height: 4px; transition: background 0.2s;
+  }
+  .bar.active {
+    background: var(--accent);
+    border-color: transparent;
+    box-shadow: 0 0 10px rgba(0,229,160,0.3);
+  }
+  .bar.today {
+    background: linear-gradient(to top, var(--accent), #80ffcf);
+    border-color: transparent;
+    box-shadow: 0 0 14px rgba(0,229,160,0.45);
+  }
+  .bar-lbl { font-family: 'Rajdhani', sans-serif; font-size: 9px; color: var(--muted); white-space: nowrap; }
+  .bar-km { font-family: 'Readex Pro', monospace; font-size: 9px; color: var(--muted); }
+  .bar-wrap.today .bar-lbl { color: var(--accent); }
+  .bar-wrap.today .bar-km { color: var(--accent); }
+
+  /* ── SPLITS ── */
+  .splits-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .splits-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .splits-title { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .splits-avg { font-family: 'Readex Pro', monospace; font-size: 13px; font-weight: 700; color: var(--accent); }
+  .split-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(42,48,64,0.6);
+  }
+  .split-row:last-child { border-bottom: none; }
+  .split-km {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px; font-weight: 700;
+    color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.5px; width: 32px; flex-shrink: 0;
+  }
+  .split-bar-wrap { flex: 1; position: relative; height: 20px; }
+  .split-bar-bg {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 100%; height: 6px;
+    background: var(--surface2); border-radius: 3px;
+  }
+  .split-bar-fill {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    height: 6px; border-radius: 3px;
+    background: var(--accent);
+  }
+  .split-pace {
+    font-family: 'Readex Pro', monospace;
+    font-size: 14px; font-weight: 700;
+    color: var(--text); width: 44px;
+    text-align: right; flex-shrink: 0;
+  }
+  .split-pace.best { color: var(--accent); }
+  .split-pace.slow { color: var(--accent2); }
+
+  /* ── ELEVAÇÃO ── */
+  .elev-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .elev-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .elev-title { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .elev-stats { display: flex; gap: 12px; }
+  .elev-stat { text-align: center; }
+  .elev-stat .ev { font-family: 'Readex Pro', monospace; font-size: 13px; font-weight: 700; }
+  .elev-stat .ev.up { color: var(--accent); }
+  .elev-stat .ev.dn { color: var(--accent2); }
+  .elev-stat .el { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .elev-chart { height: 50px; }
+
+  /* ── ATIVIDADE CARD (corrida atual) ── */
+  .activity-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .activity-header {
+    padding: 12px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .activity-date-col { }
+  .activity-date {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px; font-weight: 700; color: var(--text); letter-spacing: 0.5px;
+  }
+  .activity-type {
+    font-size: 11px; color: var(--muted); margin-top: 2px;
+  }
+  .activity-badge {
+    background: rgba(0,229,160,0.1);
+    border: 1px solid rgba(0,229,160,0.25);
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px; font-weight: 700;
+    color: var(--accent); letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .activity-metrics {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+  .am-cell {
+    padding: 12px 12px;
+    border-right: 1px solid var(--border);
+    text-align: center;
+  }
+  .am-cell:last-child { border-right: none; }
+  .am-val {
+    font-family: 'Readex Pro', monospace;
+    font-size: 18px; font-weight: 700; color: var(--text); line-height: 1;
+  }
+  .am-val.accent { color: var(--accent); }
+  .am-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px; }
+  .activity-details {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    padding: 10px 12px;
+    gap: 0;
+  }
+  .ad-item { text-align: center; }
+  .ad-val { font-family: 'Readex Pro', monospace; font-size: 14px; font-weight: 700; color: var(--text); }
+  .ad-val.purple { color: #b06efc; }
+  .ad-val.blue { color: var(--accent3); }
+  .ad-val.orange { color: var(--accent2); }
+  .ad-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 3px; }
+
+  /* MINI MAP in activity */
+  .activity-map {
+    background: #111620;
+    border-top: 1px solid var(--border);
+    height: 90px; position: relative; overflow: hidden;
+  }
+  .activity-map svg { width: 100%; height: 100%; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 10px; font-weight: 700;
+    color: var(--muted); text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: -4px;
+  }
+
+  /* BOTTOM NAV */
+  .bottomnav {
+    display: flex; justify-content: space-around;
+    align-items: center; padding: 12px 0 20px;
+    border-top: 1px solid var(--border);
+    background: var(--bg); flex-shrink: 0;
+  }
+  .nav-btn {
+    background: none; border: none;
+    color: var(--muted); font-size: 20px;
+    cursor: pointer; padding: 4px 12px;
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- STATUS BAR -->
+  <div class="statusbar">
+    <span class="time">04:01</span>
+    <div class="icons"><span>📶</span><span>🔋</span></div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <button class="menu-btn"><span></span><span></span><span></span></button>
+    <div class="app-logo">PACE UP</div>
+    <div class="header-right"></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab">Treino</div>
+    <div class="tab">Música</div>
+    <div class="tab">Tiro</div>
+    <div class="tab active">Histórico</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- PERIOD FILTER -->
+    <div class="period-row">
+      <div class="period-chip">7 dias</div>
+      <div class="period-chip">30 dias</div>
+      <div class="period-chip active">100 dias</div>
+      <div class="period-chip">365 dias</div>
+    </div>
+
+    <!-- CHALLENGE BANNER -->
+    <div class="challenge-banner">
+      <div class="challenge-icon">🏆</div>
+      <div class="challenge-text">
+        <div class="challenge-name">Desafio 365</div>
+        <div class="challenge-sub">5 km por dia durante 1 ano</div>
+      </div>
+      <div>
+        <div class="challenge-count">100<span>/365</span></div>
+      </div>
+    </div>
+
+    <!-- STATS TOTAIS -->
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="sb-val accent">574<span style="font-size:13px;">km</span></div>
+        <div class="sb-lbl">Total</div>
+      </div>
+      <div class="stat-box">
+        <div class="sb-val blue">53h<span style="font-size:13px;">48m</span></div>
+        <div class="sb-lbl">Tempo</div>
+      </div>
+      <div class="stat-box">
+        <div class="sb-val orange">100</div>
+        <div class="sb-lbl">Corridas</div>
+      </div>
+    </div>
+
+    <!-- RECORDS -->
+    <div class="records-row">
+      <div class="record-card">
+        <div class="rc-lbl">Melhor Pace</div>
+        <div class="rc-val">4:36</div>
+        <div class="rc-date">Km 1 · 10 abr</div>
+      </div>
+      <div class="record-card">
+        <div class="rc-lbl">Pace Médio Geral</div>
+        <div class="rc-val">5:36</div>
+        <div class="rc-date">100 atividades</div>
+      </div>
+    </div>
+
+    <!-- CHART SEMANAL -->
+    <div class="chart-block">
+      <div class="chart-header">
+        <div class="chart-title">Km por Semana</div>
+        <div class="chart-total">↗ 40,2 km esta semana</div>
+      </div>
+      <div class="chart-bars" id="chart-bars">
+        <!-- gerado via JS -->
+      </div>
+    </div>
+
+    <!-- ATIVIDADE MAIS RECENTE -->
+    <div class="section-label">Atividade Recente</div>
+    <div class="activity-card">
+      <div class="activity-header">
+        <div class="activity-date-col">
+          <div class="activity-date">10 ABR 2026</div>
+          <div class="activity-type">Dia 100/365 · Redbull BR 17/21</div>
+        </div>
+        <div class="activity-badge">Corrida</div>
+      </div>
+
+      <!-- MÉTRICAS PRINCIPAIS -->
+      <div class="activity-metrics">
+        <div class="am-cell">
+          <div class="am-val accent">5,74</div>
+          <div class="am-lbl">km</div>
+        </div>
+        <div class="am-cell">
+          <div class="am-val">32:14</div>
+          <div class="am-lbl">tempo</div>
+        </div>
+        <div class="am-cell">
+          <div class="am-val">5:36</div>
+          <div class="am-lbl">pace médio</div>
+        </div>
+      </div>
+
+      <!-- DETALHES -->
+      <div class="activity-details">
+        <div class="ad-item">
+          <div class="ad-val blue">162</div>
+          <div class="ad-lbl">cad. spm</div>
+        </div>
+        <div class="ad-item">
+          <div class="ad-val orange">45 m</div>
+          <div class="ad-lbl">ganho ele.</div>
+        </div>
+        <div class="ad-item">
+          <div class="ad-val purple">04:01</div>
+          <div class="ad-lbl">horário</div>
+        </div>
+      </div>
+
+      <!-- MINI MAPA -->
+      <div class="activity-map">
+        <svg viewBox="0 0 340 90" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+          <rect width="340" height="90" fill="#111620"/>
+          <g stroke="#1a2030" stroke-width="0.6" fill="none">
+            <line x1="0" y1="22" x2="340" y2="22"/>
+            <line x1="0" y1="45" x2="340" y2="45"/>
+            <line x1="0" y1="67" x2="340" y2="67"/>
+            <line x1="68" y1="0" x2="68" y2="90"/>
+            <line x1="136" y1="0" x2="136" y2="90"/>
+            <line x1="204" y1="0" x2="204" y2="90"/>
+            <line x1="272" y1="0" x2="272" y2="90"/>
+          </g>
+          <!-- rota GPX em escala para viewport 340x90 -->
+          <polyline
+            points="197.0,28.0 230.5,42.2 288.1,37.3 292.5,23.8 243.2,9.6 190.3,16.7 130.8,30.3 66.5,44.1 43.8,59.7 88.7,71.9 148.5,69.2 199.8,56.9 258.2,44.9 311.7,31.7 270.5,17.8 229.3,7.1 183.1,15.8 133.2,27.1 86.4,38.0 38.3,49.3 44.3,60.8 87.0,71.3 136.2,71.8 180.8,62.1 223.7,51.4 272.9,41.7 313.7,32.0 276.6,19.6 234.7,7.1 187.9,15.0 140.4,23.6 96.2,34.7 50.7,46.7 36.7,58.1 85.0,70.6 145.3,76.9 188.4,59.5 246.6,46.6 299.0,35.4 284.4,23.0 245.5,10.4 192.0,14.6 141.1,24.8 95.2,35.8 44.7,47.4 40.6,59.5 84.4,70.9 137.9,72.4 184.9,61.6 227.0,51.1 274.6,40.7 316.7,29.4 271.4,18.3 223.1,6.9 180.0,17.5 129.2,28.1 73.6,40.0 28.7,50.9 52.2,63.4 97.8,73.7 149.6,69.5 194.0,58.4 245.2,47.5 288.1,37.6 303.1,27.3 264.0,15.2 221.4,6.6 169.5,20.3"
+            fill="none" stroke="#00e5a0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+          <circle cx="197.0" cy="28.0" r="4" fill="#4d9fff" stroke="#0d0f14" stroke-width="1.5"/>
+          <circle cx="169.5" cy="20.3" r="5" fill="#4d9fff" stroke="white" stroke-width="1.5"/>
+          <circle cx="169.5" cy="20.3" r="9" fill="none" stroke="#4d9fff" stroke-width="0.8" opacity="0.4"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- SPLITS POR KM -->
+    <div class="splits-block">
+      <div class="splits-header">
+        <div class="splits-title">Splits por Km</div>
+        <div class="splits-avg">Média 5:36</div>
+      </div>
+
+      <!-- Km 1 — best -->
+      <div class="split-row">
+        <div class="split-km">Km 1</div>
+        <div class="split-bar-wrap">
+          <div class="split-bar-bg"></div>
+          <div class="split-bar-fill" style="width:62%;background:var(--accent);"></div>
+        </div>
+        <div class="split-pace best">4:36</div>
+      </div>
+      <!-- Km 2 -->
+      <div class="split-row">
+        <div class="split-km">Km 2</div>
+        <div class="split-bar-wrap">
+          <div class="split-bar-bg"></div>
+          <div class="split-bar-fill" style="width:90%;background:#4d9fff;"></div>
+        </div>
+        <div class="split-pace slow">5:36</div>
+      </div>
+      <!-- Km 3 -->
+      <div class="split-row">
+        <div class="split-km">Km 3</div>
+        <div class="split-bar-wrap">
+          <div class="split-bar-bg"></div>
+          <div class="split-bar-fill" style="width:78%;background:var(--accent);opacity:0.7;"></div>
+        </div>
+        <div class="split-pace">4:58</div>
+      </div>
+      <!-- Km 4 -->
+      <div class="split-row">
+        <div class="split-km">Km 4</div>
+        <div class="split-bar-wrap">
+          <div class="split-bar-bg"></div>
+          <div class="split-bar-fill" style="width:85%;background:#4d9fff;opacity:0.7;"></div>
+        </div>
+        <div class="split-pace">5:24</div>
+      </div>
+      <!-- Km 5 -->
+      <div class="split-row">
+        <div class="split-km">Km 5</div>
+        <div class="split-bar-wrap">
+          <div class="split-bar-bg"></div>
+          <div class="split-bar-fill" style="width:82%;background:var(--accent);opacity:0.6;"></div>
+        </div>
+        <div class="split-pace">5:12</div>
+      </div>
+      <!-- Km 5.74 parcial -->
+      <div class="split-row">
+        <div class="split-km" style="font-size:9px;">+0,74</div>
+        <div class="split-bar-wrap">
+          <div class="split-bar-bg"></div>
+          <div class="split-bar-fill" style="width:55%;background:var(--muted);opacity:0.5;"></div>
+        </div>
+        <div class="split-pace" style="color:var(--muted);font-size:12px;">4:28</div>
+      </div>
+    </div>
+
+    <!-- ELEVAÇÃO -->
+    <div class="elev-block">
+      <div class="elev-header">
+        <div class="elev-title">Perfil de Elevação</div>
+        <div class="elev-stats">
+          <div class="elev-stat">
+            <div class="ev up">+45 m</div>
+            <div class="el">ganho</div>
+          </div>
+          <div class="elev-stat">
+            <div class="ev dn">−40 m</div>
+            <div class="el">perda</div>
+          </div>
+          <div class="elev-stat">
+            <div class="ev" style="color:var(--text);">381 m</div>
+            <div class="el">máximo</div>
+          </div>
+        </div>
+      </div>
+      <div class="elev-chart">
+        <svg viewBox="0 0 310 50" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="elevGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#00e5a0" stop-opacity="0.4"/>
+              <stop offset="100%" stop-color="#00e5a0" stop-opacity="0.02"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,25 C15,20 25,18 40,22 S60,30 80,28 S110,18 130,20 S160,26 180,22 S205,15 225,18 S255,24 270,20 S290,16 310,18 L310,50 L0,50 Z"
+            fill="url(#elevGrad)"/>
+          <path d="M0,25 C15,20 25,18 40,22 S60,30 80,28 S110,18 130,20 S160,26 180,22 S205,15 225,18 S255,24 270,20 S290,16 310,18"
+            fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/>
+          <!-- labels elevação -->
+          <text x="0" y="48" fill="#6b7490" font-size="7" font-family="monospace">376m</text>
+          <text x="270" y="13" fill="#6b7490" font-size="7" font-family="monospace">381m</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- CADÊNCIA MÉDIA -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Cadência</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;">
+          <div style="font-family:'Readex Pro',monospace;font-size:28px;font-weight:700;color:#b06efc;line-height:1;">162</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;">passos/min · esta corrida</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:var(--muted);">Ideal corrida</div>
+          <div style="font-family:'Readex Pro',monospace;font-size:16px;font-weight:700;color:var(--accent);">170–180</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">spm recomendado</div>
+        </div>
+      </div>
+      <!-- barra de cadência -->
+      <div style="margin-top:12px;position:relative;">
+        <div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:54%;background:linear-gradient(90deg,#4d9fff,#b06efc);border-radius:3px;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+          <span style="font-size:9px;color:var(--muted);">140</span>
+          <span style="font-size:9px;color:var(--accent);">↑ 162</span>
+          <span style="font-size:9px;color:var(--muted);">200</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bottomnav">
+    <button class="nav-btn" title="Recentes">|||</button>
+    <button class="nav-btn" title="Início">□</button>
+    <button class="nav-btn" title="Voltar">‹</button>
+  </div>
+
+</div><!-- /phone -->
+
+<script>
+// Chart de semanas
+const weekData = [
+  { lbl:'S1', km:35 },
+  { lbl:'S2', km:35 },
+  { lbl:'S3', km:35 },
+  { lbl:'S4', km:35 },
+  { lbl:'S5', km:35 },
+  { lbl:'S6', km:35 },
+  { lbl:'S7', km:35 },
+  { lbl:'S8', km:40.2, today:true },
+];
+const maxKm = Math.max(...weekData.map(w => w.km));
+const container = document.getElementById('chart-bars');
+container.innerHTML = weekData.map(w => {
+  const h = Math.max(6, (w.km / maxKm) * 52);
+  const cls = w.today ? 'bar today' : (w.km >= 38 ? 'bar active' : 'bar');
+  return `<div class="bar-wrap${w.today?' today':''}">
+    <div class="${cls}" style="height:${h}px;" title="${w.km} km"></div>
+    <div class="bar-lbl">${w.lbl}</div>
+  </div>`;
+}).join('');
+</script>
+</body>
+</html>
