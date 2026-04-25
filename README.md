@@ -16,7 +16,7 @@ O usuário define o pace manualmente e precisa alcançar esse ritmo — a músic
 ##  Diferencial
 Diferente de apps tradicionais, o ritmo é fixo e o corredor se adapta — criando disciplina e consistência.
 
-## 🛠 Tecnologias
+## Tecnologias
 React + TypeScript + Capacitor
 
 ##  Como rodar
